@@ -104,84 +104,87 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, QLabel("Add Main Menu Shortcut"))
 
         self.book_widget.addWidget(self.page_2)
-
-
         # page3
         self.page_3 = QWidget()
-        self.logs_ly = QHBoxLayout(self.page_3)
-        self.logs_ly.setGeometry(QRect(0, 480, 811, 26))
+        self.logs_ly = QVBoxLayout(self.page_3)
+        self.output_logs = QTextBrowser()
+        self.logs_ly.addWidget(self.output_logs)
 
         self.logs_but = QHBoxLayout()
-        self.logs_but.setContentsMargins(0, 0, 0, 0)
         self.logs_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
         self.back = QPushButton("Back", clicked=self.click_on_back)
         self.logs_but.addWidget(self.back)
         self.back.hide()
+
         self.cancel_3 = QPushButton("Cancel", clicked=self.click_cancel_install)
         self.logs_but.addWidget(self.cancel_3)
         self.logs_ly.addLayout(self.logs_but)
 
-        self.groupBox = QGroupBox(self.page_3)
-        self.groupBox.setGeometry(QRect(0, 20, 811, 451))
-        self.progressbar_ly = QVBoxLayout(self.groupBox)
+        # self.page_3.setLayout(self.logs_ly)
+        # self.groupBox = QGroupBox("Logs")
+        # self.logs_ly.addWidget(self.groupBox)
+        # self.formLayout = QFormLayout(self.groupBox)
+        # self.groupBox.setLayout(self.formLayout)
         # progressbar
-        self.progressBar = QProgressBar(self.groupBox)
-        self.progressBar.setValue(24)
-        self.progressbar_ly.addWidget(self.progressBar)
-        self.progressBar.hide()
-        # output
-        self.output_logs = QTextBrowser(self.groupBox)
-        self.progressbar_ly.addWidget(self.output_logs)
-
+        # self.progressbar_ly = QVBoxLayout(self.groupBox)
+        # self.progressBar = QProgressBar(self.groupBox)
+        # self.progressBar.setValue(24)
+        # self.progressbar_ly.addWidget(self.progressBar)
+        # self.progressBar.hide()
+        # self.progressbar_ly.addWidget(self.output_logs)
         self.book_widget.addWidget(self.page_3)
         # page4
         self.page_4 = QWidget()
-        self.last_ly = QWidget(self.page_4)
-        self.last_ly.setGeometry(QRect(0, 480, 811, 26))
+        self.final_ly = QVBoxLayout(self.page_4)
+        self.page_4.setLayout(self.final_ly)
 
-        self.fin_but = QHBoxLayout(self.last_ly)
-        self.fin_but.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(
+            "Install is done. Click on open docs for read documentation. Click open settings for set you template")
+        self.label.setAlignment(
+            Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.final_ly.addWidget(self.label)
+        # checkbox
+        self.checkBox_run_agio = QCheckBox("Run agio.desk now")
+        self.final_ly.addWidget(self.checkBox_run_agio)
+        self.checkBox_open_settings = QCheckBox("Open settings")
+        self.final_ly.addWidget(self.checkBox_open_settings)
+        # buttons
+        self.fin_but = QHBoxLayout()
         self.fin_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        # self.last_ly = QWidget(self.page_4)
         self.doc_button = QPushButton("Open docs", clicked=self.click_open_docs)
         self.fin_but.addWidget(self.doc_button)
-        self.back_2 = QPushButton("Finish", clicked=self.click_finish)
-        self.fin_but.addWidget(self.back_2)
 
-        self.widget = QWidget(self.page_4)
-        self.widget.setGeometry(QRect(20, 30, 771, 421))
-        self.finish_ly = QHBoxLayout(self.widget)
-        self.finish_ly.setContentsMargins(0, 0, 0, 0)
-        self.label_finish = QLabel("ICON")
-        self.finish_ly.addWidget(self.label_finish)
+        self.finish_but = QPushButton("Finish", clicked=self.click_finish)
+        self.fin_but.addWidget(self.finish_but)
+        self.final_ly.addLayout(self.fin_but)
+        self.final_ly.setStretch(0, 1)
 
-        self.finish_check_ly = QVBoxLayout()
-        self.finish_check_ly.setSpacing(6)
-        self.finish_check_ly.setContentsMargins(-1, 0, -1, 0)
-        self.label = QLabel("Install is done. Click on open docs for read documentation. Click open settings for set you template")
-
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
-        self.label.setSizePolicy(sizePolicy)
-        self.label.setMaximumSize(QSize(16777215, 16777100))
-        self.label.setBaseSize(QSize(0, 100))
-        self.label.setAutoFillBackground(False)
-
-        self.finish_check_ly.addWidget(self.label)
-
-        self.checkBox_run_agio = QCheckBox(self.widget)
-        self.checkBox_run_agio.setObjectName("run_agio")
-        self.finish_check_ly.addWidget(self.checkBox_run_agio)
-
-        self.checkBox_open_settings = QCheckBox(self.widget)
-        self.checkBox_open_settings.setObjectName("open_settings")
-        self.finish_check_ly.addWidget(self.checkBox_open_settings)
-        self.finish_ly.addLayout(self.finish_check_ly)
-
+        # self.widget = QWidget(self.page_4)
+        # self.widget.setGeometry(QRect(20, 30, 771, 421))
+        # self.finish_ly = QHBoxLayout(self.widget)
+        # self.finish_ly.setContentsMargins(0, 0, 0, 0)
+        # self.label_finish = QLabel("ICON")
+        # self.finish_ly.addWidget(self.label_finish)
+        #
+        # self.finish_check_ly = QVBoxLayout()
+        # self.finish_check_ly.setSpacing(6)
+        # self.finish_check_ly.setContentsMargins(-1, 0, -1, 0)
+        #
+        # # sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        # # sizePolicy.setHorizontalStretch(0)
+        # # sizePolicy.setVerticalStretch(0)
+        # # sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        # # self.label.setSizePolicy(sizePolicy)
+        # self.label.setMaximumSize(QSize(16777215, 16777100))
+        # self.label.setBaseSize(QSize(0, 100))
+        # self.label.setAutoFillBackground(False)
+        #
+        # self.finish_check_ly.addWidget(self.label)
+        # self.finish_ly.addLayout(self.finish_check_ly)
         self.book_widget.addWidget(self.page_4)
-
+        # other
         self.central_ly.addWidget(self.book_widget)
 
         self.setCentralWidget(self.centralwidget)
@@ -193,6 +196,61 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.resize(800, 500)
         self.init_ui()
         self.proc: QProcess = None
+
+        # style
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #121212;
+                color: #dddddd;
+            }
+
+            QLabel, QGroupBox, QTextBrowser, QCheckBox {
+                color: #dddddd;
+                font-size: 13px;
+            }
+            QGroupBox {
+                border: 1px solid #333;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding: 8px;
+            }
+            QPushButton {
+                background-color: #1e1e1e;
+                color: #dddddd;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 6px 14px;
+            }
+
+            QPushButton:hover {
+                background-color: #2c2c2c;
+                border: 1px solid #555;
+            }
+
+            QPushButton:pressed {
+                background-color: #3a3a3a;
+                border: 1px solid #666;
+            }
+
+            QTextBrowser {
+                background-color: #1a1a1a;
+                border: 1px solid #333;
+                border-radius: 4px;
+            }
+
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+            }
+            QCheckBox::indicator:unchecked {
+                border: 1px solid #555;
+                background-color: #222;
+            }
+            QCheckBox::indicator:checked {
+                border: 1px solid #777;
+                background-color: #555;
+            }
+        """)
 
         QShortcut(QKeySequence("Alt+1"), self, activated=self.set_page_welcome)
         QShortcut(QKeySequence("Alt+2"), self, activated=self.set_page_settings)
@@ -293,7 +351,7 @@ class AgioDeskInstallerDialog(QMainWindow):
 
 if __name__ == '__main__':
     import click
-    # agio-drive-setup --install-dir ~/agio --add-shortcuts --clean
+    # agio-drive-setup --install-dir ~/agio --add-shortcuts
     @click.command()
     @click.option("-i", "--install-dir", type=str, required=False, default=None, help="dir for installation")
     @click.option("-a", "--add-shortcut", is_flag=True, required=False, default=True, help="add a shortcut in desktop")
