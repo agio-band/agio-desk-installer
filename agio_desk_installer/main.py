@@ -13,12 +13,12 @@ if sys.platform.startswith("linux"):
     path_to_desk = os.path.expanduser("~/.local/share/agio-desk")
 
 def main(
-        path_to_install: str = None,
-        add_shortcut: bool = True,
-        add_shortcut_menu: bool = True,
-        autorun: bool = True,
-        open_docs: bool = True,
-        open_settings: bool = True,
+        path_to_install: str,
+        add_shortcut: bool,
+        add_shortcut_menu: bool,
+        autorun: bool,
+        open_docs: bool,
+        open_settings: bool,
 ):
     # win
     if sys.platform.startswith("win"):

@@ -1,272 +1,388 @@
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QFrame,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-    QSpacerItem, QStackedWidget, QStatusBar, QTextBrowser,
-    QToolButton, QVBoxLayout, QWidget)
+import platform
+import subprocess
+import sys, os
+from pathlib import Path
+from PySide6.QtCore import *
+from PySide6.QtCore import QSize, QProcess
+from PySide6.QtGui import *
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtWidgets import *
+from PySide6.QtSvgWidgets import QSvgWidget
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        if not MainWindow.objectName():
-            MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(833, 662)
-        self.centralwidget = QWidget(MainWindow)
-        self.centralwidget.setObjectName(u"centralwidget")
-        self.verticalLayout = QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.top_widdjet = QWidget(self.centralwidget)
-        self.top_widdjet.setObjectName(u"top_widdjet")
-        self.top_widdjet.setMinimumSize(QSize(0, 100))
-        self.horizontalLayout = QHBoxLayout(self.top_widdjet)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.label_welcome = QLabel(self.top_widdjet)
-        self.label_welcome.setObjectName(u"label_welcome")
+from agio_desk_installer.main import main
 
-        self.horizontalLayout.addWidget(self.label_welcome)
+IS_FROZEN =  '__compiled__' in globals()
 
-        self.label_icon = QLabel(self.top_widdjet)
-        self.label_icon.setObjectName(u"label_icon")
+class AgioDeskInstallerDialog(QMainWindow):
 
-        self.horizontalLayout.addWidget(self.label_icon)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args)
+        path_to_icon = os.path.join(os.path.dirname(__file__), "assets/icons/")
+        self.default_install_path = str("куда его ставить ?")
+        self.setWindowTitle("agio.desk Installer")
+        icon = self.prepare_svg(path_to_icon + "favicon-o-knob-16.svg")
+        self.setWindowIcon(icon)
 
+        self.centralwidget = QWidget()
 
-        self.verticalLayout.addWidget(self.top_widdjet)
+        self.central_ly = QVBoxLayout(self.centralwidget)
 
+        self.top_widjet = QWidget(self.centralwidget)
+        self.top_widjet.setMinimumSize(QSize(0, 100))
+        # welcome text
+        self.top_ly = QHBoxLayout(self.top_widjet)
+        self.label_welcome = QLabel("Welcome to agio.desk installer")
+        font = QFont()
+        font.setPixelSize(14)
+        font.setBold(True)
+        self.label_welcome.setFont(font)
+        self.top_ly.addWidget(self.label_welcome)
+        # icon
+        self.label_icon = QSvgWidget(path_to_icon + "logo.svg")
+        self.label_icon.setFixedSize(QSize(200, 90))
+        self.top_ly.addWidget(self.label_icon)
+
+        self.central_ly.addWidget(self.top_widjet)
         self.line = QFrame(self.centralwidget)
-        self.line.setObjectName(u"line")
         self.line.setFrameShape(QFrame.Shape.HLine)
         self.line.setFrameShadow(QFrame.Shadow.Sunken)
-
-        self.verticalLayout.addWidget(self.line)
-
-        self.book_wodjet = QStackedWidget(self.centralwidget)
-        self.book_wodjet.setObjectName(u"book_wodjet")
+        self.central_ly.addWidget(self.line)
+        # book
+        self.book_widget = QStackedWidget(self.centralwidget)
+        # page1
         self.page_1 = QWidget()
-        self.page_1.setObjectName(u"page_1")
-        self.verticalLayout_2 = QVBoxLayout(self.page_1)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.label_step1 = QLabel(self.page_1)
-        self.label_step1.setObjectName(u"label_step1")
+        self.page1_ly = QVBoxLayout(self.page_1)
+
+        self.label_step1 = QLabel("Welcome. Ready to install Agio.desk? Click Next to continue.")
         self.label_step1.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
+        self.page1_ly.addWidget(self.label_step1)
 
-        self.verticalLayout_2.addWidget(self.label_step1)
+        self.page1_but = QHBoxLayout()
+        self.page1_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
-        self.button_layout = QHBoxLayout()
-        self.button_layout.setObjectName(u"button_layout")
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.next = QPushButton("Next", clicked=self.click_next)
+        self.page1_but.addWidget(self.next)
+        self.page1_ly.addLayout(self.page1_but)
+        self.page1_ly.setStretch(0, 1)
+        self.book_widget.addWidget(self.page_1)
 
-        self.button_layout.addItem(self.horizontalSpacer)
-
-        self.next = QPushButton(self.page_1)
-        self.next.setObjectName(u"next")
-
-        self.button_layout.addWidget(self.next)
-
-
-        self.verticalLayout_2.addLayout(self.button_layout)
-
-        self.verticalLayout_2.setStretch(0, 1)
-        self.book_wodjet.addWidget(self.page_1)
+        # page2
         self.page_2 = QWidget()
-        self.page_2.setObjectName(u"page_2")
-        self.horizontalLayoutWidget = QWidget(self.page_2)
-        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(0, 470, 801, 31))
-        self.buutton_layout = QHBoxLayout(self.horizontalLayoutWidget)
-        self.buutton_layout.setObjectName(u"buutton_layout")
-        self.buutton_layout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.settings_ly = QVBoxLayout()
+        self.page_2.setLayout(self.settings_ly)
 
-        self.buutton_layout.addItem(self.horizontalSpacer_2)
+        self.install_settings = QGroupBox('Settings')
+        self.settings_ly.addWidget(self.install_settings)
+        self.formLayout = QFormLayout(self.install_settings)
+        self.install_settings.setLayout(self.formLayout)
 
-        self.cancel = QPushButton(self.horizontalLayoutWidget)
-        self.cancel.setObjectName(u"cancel")
+        self.page2_but = QHBoxLayout()
+        self.page2_but.setContentsMargins(0, 0, 0, 0)
+        self.page2_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
-        self.buutton_layout.addWidget(self.cancel)
+        self.cancel = QPushButton("Cancel", clicked=self.click_cancel)
+        self.page2_but.addWidget(self.cancel)
 
-        self.install = QPushButton(self.horizontalLayoutWidget)
-        self.install.setObjectName(u"install")
+        self.install = QPushButton("Install", clicked=self.click_install)
+        self.page2_but.addWidget(self.install)
+        self.settings_ly.addLayout(self.page2_but)
 
-        self.buutton_layout.addWidget(self.install)
+        self.browse_ly = QHBoxLayout()
+        self.lineEdit = QLineEdit(self.install_settings)
+        self.browse_ly.addWidget(self.lineEdit)
+        self.toolButton = QPushButton("Browse...", clicked=self.click_browser)
+        self.browse_ly.addWidget(self.toolButton)
+        self.formLayout.setLayout(1, QFormLayout.ItemRole.FieldRole, self.browse_ly)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, QLabel("Destination"))
 
-        self.instal_settings = QGroupBox(self.page_2)
-        self.instal_settings.setObjectName(u"instal_settings")
-        self.instal_settings.setGeometry(QRect(10, 30, 791, 381))
-        self.formLayout = QFormLayout(self.instal_settings)
-        self.formLayout.setObjectName(u"formLayout")
-        self.checkBox_1 = QCheckBox(self.instal_settings)
-        self.checkBox_1.setObjectName(u"checkBox_1")
+        self.dsktp_check = QCheckBox('', checked=True)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.dsktp_check)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, QLabel("Add Desktop Shortcut"))
 
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.checkBox_1)
+        self.menu_check = QCheckBox('', checked=True)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.menu_check)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, QLabel("Add Main Menu Shortcut"))
 
-        self.checkBox_2 = QCheckBox(self.instal_settings)
-        self.checkBox_2.setObjectName(u"checkBox_2")
-
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.checkBox_2)
-
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.lineEdit = QLineEdit(self.instal_settings)
-        self.lineEdit.setObjectName(u"lineEdit")
-
-        self.horizontalLayout_2.addWidget(self.lineEdit)
-
-        self.toolButton = QToolButton(self.instal_settings)
-        self.toolButton.setObjectName(u"toolButton")
-
-        self.horizontalLayout_2.addWidget(self.toolButton)
-
-
-        self.formLayout.setLayout(1, QFormLayout.ItemRole.FieldRole, self.horizontalLayout_2)
-
-        self.label_browse = QLabel(self.instal_settings)
-        self.label_browse.setObjectName(u"label_browse")
-
-        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_browse)
-
-        self.book_wodjet.addWidget(self.page_2)
+        self.book_widget.addWidget(self.page_2)
+        # page3
         self.page_3 = QWidget()
-        self.page_3.setObjectName(u"page_3")
-        self.horizontalLayoutWidget_3 = QWidget(self.page_3)
-        self.horizontalLayoutWidget_3.setObjectName(u"horizontalLayoutWidget_3")
-        self.horizontalLayoutWidget_3.setGeometry(QRect(0, 480, 811, 26))
-        self.button_layout_2 = QHBoxLayout(self.horizontalLayoutWidget_3)
-        self.button_layout_2.setObjectName(u"button_layout_2")
-        self.button_layout_2.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.logs_ly = QVBoxLayout(self.page_3)
+        self.output_logs = QTextBrowser()
+        self.logs_ly.addWidget(self.output_logs)
 
-        self.button_layout_2.addItem(self.horizontalSpacer_3)
+        self.logs_but = QHBoxLayout()
+        self.logs_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
-        self.back = QPushButton(self.horizontalLayoutWidget_3)
-        self.back.setObjectName(u"back")
+        self.back = QPushButton("Back", clicked=self.click_on_back)
+        self.logs_but.addWidget(self.back)
+        self.back.hide()
 
-        self.button_layout_2.addWidget(self.back)
+        self.cancel_3 = QPushButton("Cancel", clicked=self.click_cancel_install)
+        self.logs_but.addWidget(self.cancel_3)
+        self.logs_ly.addLayout(self.logs_but)
 
-        self.groupBox = QGroupBox(self.page_3)
-        self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(0, 20, 811, 451))
-        self.verticalLayout_3 = QVBoxLayout(self.groupBox)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.progressBar = QProgressBar(self.groupBox)
-        self.progressBar.setObjectName(u"progressBar")
-        self.progressBar.setValue(24)
-
-        self.verticalLayout_3.addWidget(self.progressBar)
-
-        self.textBrowser = QTextBrowser(self.groupBox)
-        self.textBrowser.setObjectName(u"textBrowser")
-
-        self.verticalLayout_3.addWidget(self.textBrowser)
-
-        self.book_wodjet.addWidget(self.page_3)
+        # self.page_3.setLayout(self.logs_ly)
+        # self.groupBox = QGroupBox("Logs")
+        # self.logs_ly.addWidget(self.groupBox)
+        # self.formLayout = QFormLayout(self.groupBox)
+        # self.groupBox.setLayout(self.formLayout)
+        # progressbar
+        # self.progressbar_ly = QVBoxLayout(self.groupBox)
+        # self.progressBar = QProgressBar(self.groupBox)
+        # self.progressBar.setValue(24)
+        # self.progressbar_ly.addWidget(self.progressBar)
+        # self.progressBar.hide()
+        # self.progressbar_ly.addWidget(self.output_logs)
+        self.book_widget.addWidget(self.page_3)
+        # page4
         self.page_4 = QWidget()
-        self.page_4.setObjectName(u"page_4")
-        self.horizontalLayoutWidget_4 = QWidget(self.page_4)
-        self.horizontalLayoutWidget_4.setObjectName(u"horizontalLayoutWidget_4")
-        self.horizontalLayoutWidget_4.setGeometry(QRect(0, 480, 811, 26))
-        self.button_layout_3 = QHBoxLayout(self.horizontalLayoutWidget_4)
-        self.button_layout_3.setObjectName(u"button_layout_3")
-        self.button_layout_3.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.final_ly = QVBoxLayout(self.page_4)
+        self.page_4.setLayout(self.final_ly)
 
-        self.button_layout_3.addItem(self.horizontalSpacer_4)
+        self.label = QLabel(
+            "Install is done. Click on open docs for read documentation. Click open settings for set you template")
+        self.label.setAlignment(
+            Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.final_ly.addWidget(self.label)
+        # checkbox
+        self.checkBox_run_agio = QCheckBox("Run agio.desk now")
+        self.final_ly.addWidget(self.checkBox_run_agio)
+        self.checkBox_open_settings = QCheckBox("Open settings")
+        self.final_ly.addWidget(self.checkBox_open_settings)
+        # buttons
+        self.fin_but = QHBoxLayout()
+        self.fin_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        # self.last_ly = QWidget(self.page_4)
+        self.doc_button = QPushButton("Open docs", clicked=self.click_open_docs)
+        self.fin_but.addWidget(self.doc_button)
 
-        self.doc_button = QPushButton(self.horizontalLayoutWidget_4)
-        self.doc_button.setObjectName(u"doc_button")
+        self.finish_but = QPushButton("Finish", clicked=self.click_finish)
+        self.fin_but.addWidget(self.finish_but)
+        self.final_ly.addLayout(self.fin_but)
+        self.final_ly.setStretch(0, 1)
 
-        self.button_layout_3.addWidget(self.doc_button)
+        # self.widget = QWidget(self.page_4)
+        # self.widget.setGeometry(QRect(20, 30, 771, 421))
+        # self.finish_ly = QHBoxLayout(self.widget)
+        # self.finish_ly.setContentsMargins(0, 0, 0, 0)
+        # self.label_finish = QLabel("ICON")
+        # self.finish_ly.addWidget(self.label_finish)
+        #
+        # self.finish_check_ly = QVBoxLayout()
+        # self.finish_check_ly.setSpacing(6)
+        # self.finish_check_ly.setContentsMargins(-1, 0, -1, 0)
+        #
+        # # sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        # # sizePolicy.setHorizontalStretch(0)
+        # # sizePolicy.setVerticalStretch(0)
+        # # sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        # # self.label.setSizePolicy(sizePolicy)
+        # self.label.setMaximumSize(QSize(16777215, 16777100))
+        # self.label.setBaseSize(QSize(0, 100))
+        # self.label.setAutoFillBackground(False)
+        #
+        # self.finish_check_ly.addWidget(self.label)
+        # self.finish_ly.addLayout(self.finish_check_ly)
+        self.book_widget.addWidget(self.page_4)
+        # other
+        self.central_ly.addWidget(self.book_widget)
 
-        self.back_2 = QPushButton(self.horizontalLayoutWidget_4)
-        self.back_2.setObjectName(u"back_2")
+        self.setCentralWidget(self.centralwidget)
 
-        self.button_layout_3.addWidget(self.back_2)
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
 
-        self.widget = QWidget(self.page_4)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(20, 30, 771, 421))
-        self.horizontalLayout_3 = QHBoxLayout(self.widget)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.label_finish = QLabel(self.widget)
-        self.label_finish.setObjectName(u"label_finish")
+        self.set_page_welcome()
+        self.resize(800, 500)
+        self.init_ui()
+        self.proc: QProcess = None
 
-        self.horizontalLayout_3.addWidget(self.label_finish)
+        # style
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #121212;
+                color: #dddddd;
+            }
 
-        self.verticalLayout_4 = QVBoxLayout()
-        self.verticalLayout_4.setSpacing(6)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(-1, 0, -1, 0)
-        self.label = QLabel(self.widget)
-        self.label.setObjectName(u"label")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
-        self.label.setSizePolicy(sizePolicy)
-        self.label.setMaximumSize(QSize(16777215, 16777100))
-        self.label.setBaseSize(QSize(0, 100))
-        self.label.setAutoFillBackground(False)
+            QLabel, QGroupBox, QTextBrowser, QCheckBox {
+                color: #dddddd;
+                font-size: 13px;
+            }
+            QGroupBox {
+                border: 1px solid #333;
+                border-radius: 6px;
+                margin-top: 10px;
+                padding: 8px;
+            }
+            QPushButton {
+                background-color: #1e1e1e;
+                color: #dddddd;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 6px 14px;
+            }
 
-        self.verticalLayout_4.addWidget(self.label)
+            QPushButton:hover {
+                background-color: #2c2c2c;
+                border: 1px solid #555;
+            }
 
-        self.checkBox_run_agio = QCheckBox(self.widget)
-        self.checkBox_run_agio.setObjectName(u"checkBox_run_agio")
-        self.checkBox_run_agio.setCheckable(False)
-        self.checkBox_run_agio.setAutoRepeat(False)
+            QPushButton:pressed {
+                background-color: #3a3a3a;
+                border: 1px solid #666;
+            }
 
-        self.verticalLayout_4.addWidget(self.checkBox_run_agio)
+            QTextBrowser {
+                background-color: #1a1a1a;
+                border: 1px solid #333;
+                border-radius: 4px;
+            }
 
-        self.checkBox_open_settings = QCheckBox(self.widget)
-        self.checkBox_open_settings.setObjectName(u"checkBox_open_settings")
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+            }
+            QCheckBox::indicator:unchecked {
+                border: 1px solid #555;
+                background-color: #222;
+            }
+            QCheckBox::indicator:checked {
+                border: 1px solid #777;
+                background-color: #555;
+            }
+        """)
 
-        self.verticalLayout_4.addWidget(self.checkBox_open_settings)
+        QShortcut(QKeySequence("Alt+1"), self, activated=self.set_page_welcome)
+        QShortcut(QKeySequence("Alt+2"), self, activated=self.set_page_settings)
+        QShortcut(QKeySequence("Alt+3"), self, activated=self.set_page_logs)
+        QShortcut(QKeySequence("Alt+4"), self, activated=self.set_page_done)
+        self.forced_exit = False
+        # if not self.is_admin():
+        #     QMessageBox.warning(self, "Warning", "Please restart with admin privileges")
+        #     QApplication.instance().quit()
+        #     sys.exit(0)
+        #     return
 
+    def init_ui(self):
+        self.apply_style()
+        # self.lineEdit.setText(self.default_install_path)
 
-        self.horizontalLayout_3.addLayout(self.verticalLayout_4)
+    def apply_style(self):
+        style_file = Path(__file__).parent / "assets/style.css"
+        if style_file.is_file():
+            self.setStyleSheet(style_file.read_text())
 
-        self.book_wodjet.addWidget(self.page_4)
+    def prepare_svg(self, svg_path: str, size: int = 64) -> QIcon:
+        renderer = QSvgRenderer(svg_path)
+        pixmap = QPixmap(QSize(size, size))
+        pixmap.fill(Qt.GlobalColor.transparent)
 
-        self.verticalLayout.addWidget(self.book_wodjet)
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
 
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.statusbar = QStatusBar(MainWindow)
-        self.statusbar.setObjectName(u"statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        return QIcon(pixmap)
 
-        self.retranslateUi(MainWindow)
+    def click_next(self):
+        self.set_page_settings()
 
-        self.book_wodjet.setCurrentIndex(3)
+    def set_page_welcome(self):
+        self.label_welcome.setText('Welcome to agio.desk installer')
+        self.book_widget.setCurrentIndex(0)
 
+    def set_page_settings(self):
+        self.label_welcome.setText('Select options and press Install')
+        self.book_widget.setCurrentIndex(1)
 
-        QMetaObject.connectSlotsByName(MainWindow)
-    # setupUi
+    def set_page_logs(self):
+        self.label_welcome.setText('Processing...')
+        self.book_widget.setCurrentIndex(2)
 
-    def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.label_welcome.setText(QCoreApplication.translate("MainWindow", u"Welcome", None))
-        self.label_icon.setText(QCoreApplication.translate("MainWindow", u"  ICON", None))
-        self.label_step1.setText(QCoreApplication.translate("MainWindow", u"Step 1", None))
-        self.next.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
-        self.cancel.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
-        self.install.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
-        self.instal_settings.setTitle(QCoreApplication.translate("MainWindow", u"Settings", None))
-        self.checkBox_1.setText(QCoreApplication.translate("MainWindow", u"create_shortcut", None))
-        self.checkBox_2.setText(QCoreApplication.translate("MainWindow", u"create_shrotcut_in_menu", None))
-        self.toolButton.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.label_browse.setText(QCoreApplication.translate("MainWindow", u"destanation", None))
-        self.back.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"logs", None))
-        self.doc_button.setText(QCoreApplication.translate("MainWindow", u"view_doc", None))
-        self.back_2.setText(QCoreApplication.translate("MainWindow", u"finish", None))
-        self.label_finish.setText(QCoreApplication.translate("MainWindow", u"ICON", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Complete", None))
-        self.checkBox_run_agio.setText(QCoreApplication.translate("MainWindow", u"run_agio.desk", None))
-        self.checkBox_open_settings.setText(QCoreApplication.translate("MainWindow", u"open_settings", None))
-    # retranslateUi
+    def set_page_done(self):
+        self.label_welcome.setText('Installation completed!')
+        self.book_widget.setCurrentIndex(3)
 
+    def click_cancel(self):
+        if QMessageBox.question(self, "Cancel installation", "Exit ?") == QMessageBox.Yes:
+            super().close()
+
+    def click_install(self):
+        # пока еще не понятно что тут будет как заглушка
+        self.book_widget.setCurrentIndex(2)
+
+    def click_browser(self):
+        f = QFileDialog.getExistingDirectory(self, "Browse")
+        if f:
+            self.lineEdit.setText(f)
+
+    def click_on_back(self):
+        self.set_page_settings()
+
+    def click_cancel_install(self):
+        if QMessageBox.question(self, "Cancel installation", "Stop install and exit ?") == QMessageBox.Yes:
+            if self.proc is not None:
+                if self.proc.isOpen():
+                    self.proc.kill()
+                    self.proc.waitForFinished(300)
+                    self.output_logs.append('Canceled')
+                    self.proc = None
+            self.set_page_settings()
+
+    def click_open_docs(self):
+        pass
+
+    def click_finish(self):
+        # if self.run_agio.isChecked():
+        #     install_dir = self.line_path.text()
+        #     system = platform.system()
+        #     if system == "Windows":
+        #         self.win_run(install_dir)
+        #     elif system == "Linux":
+        #         self.linux_run(install_dir)
+        # self.forced_exit = True
+        super().close()
+
+    def is_admin(self) -> bool:
+        if os.name == 'nt':
+            import ctypes
+            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        else:
+            return os.geteuid() == 0
+
+if __name__ == '__main__':
+    import click
+    # agio-drive-setup --install-dir ~/agio --add-shortcuts
+    @click.command()
+    @click.option("-i", "--install-dir", type=str, required=False, default=None, help="dir for installation")
+    @click.option("-a", "--add-shortcut", is_flag=True, required=False, default=True, help="add a shortcut in desktop")
+    @click.option("-m", "--add-shortcut_in_settings", is_flag=True, required=False, default=False,
+                  help="add a shortcut in settings")
+    @click.option("-r", "--autorun", is_flag=True, required=False, default=True, help="autorun")
+    @click.option("-d", "--open_docs", is_flag=True, required=False, default=False, help="open documentation")
+    @click.option("-s", "--open_settings", is_flag=True, required=False, default=False, help="open settings")
+    def install(
+            install_dir: str,
+            add_shortcut: bool,
+            add_shortcut_in_settings: bool,
+            autorun: bool,
+            open_docs: bool,
+            open_settings: bool
+    ) -> None:
+        main(
+            path_to_install=install_dir,
+            add_shortcut=add_shortcut,
+            add_shortcut_menu=add_shortcut_in_settings,
+            autorun=autorun,
+            open_docs=open_docs,
+            open_settings=open_settings
+        )
+        # if any([install_dir, add_shortcut]):
+            # non gui mode
+            # main(path_to_install=install_dir, add_shortcut=add_shortcut, add_shortcut_menu=add_shortcut_in_settings, autorun=autorun, open_docs=open_docs, open_settings=open_settings)
+        # else:
+            # open dialog
+        app = QApplication(sys.argv)
+        window = AgioDeskInstallerDialog()
+        window.show()
+        sys.exit(app.exec())
+    install()
