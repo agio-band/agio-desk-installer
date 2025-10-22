@@ -65,16 +65,18 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.page1_ly.addLayout(self.page1_but)
         self.page1_ly.setStretch(0, 1)
         self.book_widget.addWidget(self.page_1)
+
         # page2
         self.page_2 = QWidget()
-        self.settings_ly = QWidget(self.page_2)
-        self.settings_ly.setGeometry(QRect(0, 470, 801, 31))
+        self.settings_ly = QVBoxLayout()
+        self.page_2.setLayout(self.settings_ly)
 
-        self.instal_settings = QGroupBox(self.page_2)
-        self.instal_settings.setGeometry(QRect(10, 30, 791, 381))
-        self.formLayout = QFormLayout(self.instal_settings)
+        self.install_settings = QGroupBox('Settings')
+        self.settings_ly.addWidget(self.install_settings)
+        self.formLayout = QFormLayout(self.install_settings)
+        self.install_settings.setLayout(self.formLayout)
 
-        self.page2_but = QHBoxLayout(self.settings_ly)
+        self.page2_but = QHBoxLayout()
         self.page2_but.setContentsMargins(0, 0, 0, 0)
         self.page2_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
@@ -83,25 +85,27 @@ class AgioDeskInstallerDialog(QMainWindow):
 
         self.install = QPushButton("Install", clicked=self.click_install)
         self.page2_but.addWidget(self.install)
-
-        self.dsktp_check = QCheckBox(self.instal_settings, checked=True)
-        self.dsktp_check.setObjectName("Add shortcut in desktop")
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.dsktp_check)
-
-        self.set_check = QCheckBox(self.instal_settings, checked=True)
-        self.set_check.setObjectName("Add shortcut in settings")
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.set_check)
+        self.settings_ly.addLayout(self.page2_but)
 
         self.browse_ly = QHBoxLayout()
-        self.lineEdit = QLineEdit(self.instal_settings)
+        self.lineEdit = QLineEdit(self.install_settings)
         self.browse_ly.addWidget(self.lineEdit)
         self.toolButton = QPushButton("Browse...", clicked=self.click_browser)
         self.browse_ly.addWidget(self.toolButton)
         self.formLayout.setLayout(1, QFormLayout.ItemRole.FieldRole, self.browse_ly)
-        self.label_browse = QLabel("Destination")
-        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_browse)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, QLabel("Destination"))
+
+        self.dsktp_check = QCheckBox('', checked=True)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.dsktp_check)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, QLabel("Add Desktop Shortcut"))
+
+        self.menu_check = QCheckBox('', checked=True)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.menu_check)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, QLabel("Add Main Menu Shortcut"))
 
         self.book_widget.addWidget(self.page_2)
+
+
         # page3
         self.page_3 = QWidget()
         self.logs_ly = QHBoxLayout(self.page_3)
@@ -203,7 +207,7 @@ class AgioDeskInstallerDialog(QMainWindow):
 
     def init_ui(self):
         self.apply_style()
-        self.lineEdit.setText(self.default_install_path)
+        # self.lineEdit.setText(self.default_install_path)
 
     def apply_style(self):
         style_file = Path(__file__).parent / "assets/style.css"
