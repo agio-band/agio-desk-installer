@@ -1,0 +1,95 @@
+/*QWidget {*/
+/*    background-color: rgb(50, 50, 50);*/
+/*    color: rgb(230, 230, 230)*/
+/*}*/
+
+/*QPushButton {*/
+/*  background-color: rgb(45, 45, 45);*/
+/*  color: rgb(240, 240, 240);*/
+/*  border: 1px solid rgb(70, 70, 70);*/
+/*   border-radius: 6px; padding: 6px 14px;*/
+/*}*/
+/*QPushButton:hover {*/
+/*  background-color: rgb(65, 65, 65);*/
+/*}*/
+
+/*QPushButton:pressed {*/
+/*  background-color: rgb(85, 85, 85);*/
+/*}*/
+
+
+QMainWindow {
+    background-color: #272727;
+    color: #dddddd;
+}
+
+QLabel, QGroupBox, QTextBrowser, QCheckBox {
+    color: #dddddd;
+    font-size: 13px;
+}
+QGroupBox {
+    border: 1px solid #333;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding: 8px;
+}
+QPushButton {
+    background-color: #1e1e1e;
+    color: #dddddd;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 6px 14px;
+}
+
+QPushButton:hover {
+    background-color: #2c2c2c;
+    border: 1px solid #555;
+}
+
+QPushButton:pressed {
+    background-color: #3a3a3a;
+    border: 1px solid #666;
+}
+
+QTextBrowser {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+
+#darkWidget, #darkWidget QWidget {
+    background-color: rgb(27, 27, 27);
+    border: none;
+}
+
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    /* Углы индикатора будут скруглены, если установить здесь */
+    /* border-radius: 3px; */
+}
+
+QCheckBox::indicator:unchecked {
+    border: 1px solid #555;     /* Неактивная рамка */
+    background-color: #222; /* Неактивный фон: темно-серый */
+}
+
+QCheckBox::indicator:checked {
+    /* Меняем рамку и фон на активные цвета */
+    border: 1px solid #FFF;     /* Активная рамка: белая */
+    background-color: #6a6a6a; /* <-- Активный фон: ярко-зеленый (Замените на нужный вам цвет) */
+}
+
+QCheckBox {
+    spacing: 8px;
+    font-size: 14px;
+}
+
+#separator, #separator QFrame {
+    border-color: #444444;
+    background-color: #444444;
+    border-width: 1px;
+    border-style: solid;
+}
