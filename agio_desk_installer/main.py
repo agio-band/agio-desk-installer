@@ -12,24 +12,92 @@ from PySide6.QtWidgets import *
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from agio_desk_installer.install_tools import start_install, customization
+from agio_desk_installer.install_tools.install_desk import get_agio_installation_path
 
 IS_FROZEN =  '__compiled__' in globals()
 
-ONLINE_DOCS_URL = 'https://doki.agio.services/home'
-WELCOME_TEXT = "Welcome. Ready to install Agio.desk? Click Next to continue."
-THANKS_TEXT = f'''
-Thank you for installing agio.desk.
-<br>
-<br>
-For comprehensive guidance and detailed features, please consult the <a href="{ONLINE_DOCS_URL}">Online Documentation</a>.
-<br>
-We hope you enjoy using the program.
+SIGN_IN_URL = 'https://platform.agio.services/login'
+SIGN_UP_URL = 'https://platform.agio.services/signup'
+DOCS_URL = 'https://doki.agio.services'
+SUPPORT_UEL = 'https://t.me/agio_support_bot'
+
+WELCOME_TEXT = """
+<html>
+<head/>
+<body>
+
+    <p>
+        We're excited to have you on board!
+    </p>
+    <p>
+        This installer will guide you through the installation process.<br/>
+        To get started, simply click the <span style=\" font-weight:600;\">NEXT</span> button below.
+    </p>
+    <p>
+        Let\u2019s get things set up!
+    </p>
+</body>
+</html>
+"""
+DONE_TEXT = f'''
+<html>
+<head/>
+<body>
+    <p><span style=" font-size:12pt; font-weight:600;">
+        Thank you for installing agio.desk!</span>
+    </p>
+    <p>We appreciate you choosing our software. You're all set to begin using it.</p>
+    <ul style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;">
+    
+        <li style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
+            Want to access cloud features or manage your account? 
+            <br>
+            <a href="{SIGN_IN_URL}">
+            Log in
+            </a>
+                or 
+            <a href="{SIGN_UP_URL}">
+                Create an account
+            </a> 
+            on our website.
+         </li>
+    
+        <li style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
+            For help getting started, visit our 
+            <a href="{DOCS_URL}">
+                <span style=" text-decoration: underline; color:#1d99f3;">
+                    Getting Started Guide
+                </span>
+            </a>
+        </li>
+    
+        <li style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
+            For complete documentation, check out our <a href="{DOCS_URL}">
+            <span style="text-decoration: underline; color:#1d99f3;">
+                Full Docs
+            </span>
+            </a>
+        </li>
+    
+        <li style="margin-top: 2px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
+            Need support? Reach us anytime at 
+            <a href="{SUPPORT_UEL}">
+                <span style=" text-decoration: underline; color:#1d99f3;">
+                    Support Chat
+                </span>
+            </a>
+        </li>
+    
+</ul>
+<p>We wish you all the best and hope you enjoy using <b>agio Platform!</b></p>
+<p>\u2014 The agio band</p></body>
+</html>
 '''
 ICONS_PATH = os.path.join(os.path.dirname(__file__), "assets/icons")
 
 
 def get_default_install_path():
-    return os.path.expanduser('~/agio/agio-desk')
+    return Path(get_agio_installation_path(), 'agio-desk').as_posix()
 
 
 class AgioDeskInstallerDialog(QMainWindow):
@@ -52,7 +120,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         # welcome text
         self.top_ly = QHBoxLayout(self.top_widget)
         self.top_ly.setContentsMargins(30, 10, 30, 10)
-        self.label_welcome = QLabel("Welcome to agio.desk installer")
+        self.label_welcome = QLabel()
         font = QFont()
         font.setPixelSize(14)
         font.setBold(True)
@@ -116,11 +184,13 @@ class AgioDeskInstallerDialog(QMainWindow):
 
         self.add_desktop_shortcut_cbx = QCheckBox('', checked=True)
         self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.add_desktop_shortcut_cbx)
-        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, QLabel("Add Desktop Shortcut"))
+        # self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, QLabel("Add Desktop Shortcut"))
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, CheckBoxLabel(self.add_desktop_shortcut_cbx, "Add Desktop Shortcut"))
 
         self.add_menu_shortcut_cbx = QCheckBox('', checked=True)
         self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.add_menu_shortcut_cbx)
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, QLabel("Add Main Menu Shortcut"))
+        # self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, QLabel("Add Main Menu Shortcut"))
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, CheckBoxLabel(self.add_menu_shortcut_cbx, "Add Main Menu Shortcut"))
 
         self.settings_ly.addLayout(self.formLayout)
 
@@ -165,7 +235,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.thanks_lb.setAlignment(
             Qt.AlignmentFlag.AlignLeading | Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.thanks_lb.setTextFormat(Qt.RichText)
-        self.thanks_lb.setText(THANKS_TEXT)
+        self.thanks_lb.setText(DONE_TEXT)
         self.thanks_lb.setOpenExternalLinks(True)
         self.final_ly.addWidget(self.thanks_lb)
         # buttons
@@ -208,6 +278,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         QShortcut(QKeySequence("Ctrl+r"), self, activated=self.reset_custom_versions)
 
         self.forced_exit = False
+
     # ui
     def init_ui(self):
         self.apply_style()
@@ -227,6 +298,15 @@ class AgioDeskInstallerDialog(QMainWindow):
         painter.end()
 
         return QIcon(pixmap)
+
+    def closeEvent(self, event) -> None:
+        if not self.forced_exit and not QMessageBox.question(
+                self,
+                "Cancel",
+                "Cancel install and exit ?") == QMessageBox.Yes:
+            event.ignore()
+        else:
+            super().closeEvent(event)
 
     # callbacks
     def on_click_next(self):
@@ -264,14 +344,7 @@ class AgioDeskInstallerDialog(QMainWindow):
             self.set_page_settings()
 
     def on_click_finish(self):
-        # if self.run_agio.isChecked():
-        #     install_dir = self.line_path.text()
-        #     system = platform.system()
-        #     if system == "Windows":
-        #         self.win_run(install_dir)
-        #     elif system == "Linux":
-        #         self.linux_run(install_dir)
-        # self.forced_exit = True
+        self.forced_exit = True
         super().close()
 
     def on_process_output(self):
@@ -292,7 +365,7 @@ class AgioDeskInstallerDialog(QMainWindow):
 
     # pages
     def set_page_welcome(self):
-        self.label_welcome.setText('Welcome to agio.desk installer')
+        self.label_welcome.setText('Welcome to the agio.desk Setup Wizard')
         self.book_widget.setCurrentIndex(0)
 
     def set_page_settings(self):
@@ -333,8 +406,14 @@ class AgioDeskInstallerDialog(QMainWindow):
             text = ''
             for k, v in self.custom_versions['values'].items():
                 text += f'{k}@{v['value']}<br>'
-            html = (f"<html><head/><body>{text}<br>"
-                    f"<i style=\" font-style:italic; color:#707070;\">(Ctrl+R to reset)</i></body></html>")
+            html = (f"""
+<html>
+<body>
+<p><b>Custom versions:</b></p>{text}<br>
+<i style="font-style:italic; color:#707070;">(Ctrl+R to reset)</i>
+</body>
+</html>
+""")
             self.custom_versions_lb.setText(html)
         else:
             self.custom_versions_lb.setText('')
@@ -389,6 +468,16 @@ def open_installer_dialog():
     center_on_screen(window, app)
     window.show()
     sys.exit(app.exec())
+
+
+class CheckBoxLabel(QLabel):
+    def __init__(self, checkbox, *args, **kwargs):
+        super(CheckBoxLabel, self).__init__(*args, **kwargs)
+        self.checkbox = checkbox
+
+    def mouseReleaseEvent(self, event):
+        self.checkbox.setChecked(not self.checkbox.isChecked())
+        return super().mouseReleaseEvent(event)
 
 
 if __name__ == '__main__':
