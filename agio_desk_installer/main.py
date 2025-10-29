@@ -405,7 +405,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         if self.custom_versions:
             text = ''
             for k, v in self.custom_versions['values'].items():
-                text += f'{k}@{v['value']}<br>'
+                text += f'{k}@{v["value"]}<br>'
             html = (f"""
 <html>
 <body>
