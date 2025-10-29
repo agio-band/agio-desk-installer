@@ -11,8 +11,9 @@ from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import *
 from PySide6.QtSvgWidgets import QSvgWidget
 
+from agio.tools import app_dirs
 from agio_desk_installer.install_tools import start_install, customization
-from agio_desk_installer.install_tools.install_desk import get_agio_installation_path
+
 
 IS_FROZEN =  '__compiled__' in globals()
 
@@ -97,7 +98,7 @@ ICONS_PATH = os.path.join(os.path.dirname(__file__), "assets/icons")
 
 
 def get_default_install_path():
-    return Path(get_agio_installation_path(), 'agio-desk').as_posix()
+    return Path(app_dirs.install_dir(), 'agio-desk').as_posix()
 
 
 class AgioDeskInstallerDialog(QMainWindow):
