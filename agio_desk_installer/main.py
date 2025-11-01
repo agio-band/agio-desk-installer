@@ -12,7 +12,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from agio.tools import app_dirs
-from agio_desk_installer.install_tools import start_install, customization
+from agio_desk_installer.install_tools import start_install, customization, user_tools
 
 
 IS_FROZEN =  '__compiled__' in globals()
@@ -175,7 +175,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.browse_ly = QHBoxLayout()
         self.installation_dir_le = QLineEdit()
         self.installation_dir_le.setPlaceholderText("Installation Path")
-        self.installation_dir_le.setText(get_default_install_path())
+        # self.installation_dir_le.setText(get_default_install_path())
         self.browse_ly.addWidget(self.installation_dir_le)
         self.toolButton = QPushButton("Browse...", clicked=self.on_click_browse)
         self.browse_ly.addWidget(self.toolButton)
@@ -283,6 +283,12 @@ class AgioDeskInstallerDialog(QMainWindow):
     # ui
     def init_ui(self):
         self.apply_style()
+        prefs = user_tools.load_info_file()
+        print('LOAD PREFS', prefs)
+        install_path = prefs.get('path_to_install', get_default_install_path())
+        self.installation_dir_le.setText(install_path)
+        self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
+        self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
 
     def apply_style(self):
         style_file = Path(__file__).parent / "assets/style.css"
@@ -406,7 +412,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         if self.custom_versions:
             text = ''
             for k, v in self.custom_versions['values'].items():
-                text += f'{k}@{v['value']}<br>'
+                text += f'{k}@{v["value"]}<br>'
             html = (f"""
 <html>
 <body>
@@ -482,15 +488,16 @@ class CheckBoxLabel(QLabel):
 
 
 if __name__ == '__main__':
+    import os
     import click
     # agio-drive-setup --install-dir ~/agio --add-shortcuts
-
+    os.chdir(os.path.expanduser('~'))
     @click.command()
     @click.option("-i", "--install-dir", type=str, required=False, default=None,
                   help="Path for installation")
-    @click.option("-d", "--add-desktop-shortcut", is_flag=True, required=False, default=True,
+    @click.option("-d", "--add-desktop-shortcut", is_flag=True, required=False, default=False,
                   help="Add a shortcut to desktop")
-    @click.option("-m", "--add-main-menu-shortcut", is_flag=True, required=False, default=True,
+    @click.option("-m", "--add-main-menu-shortcut", is_flag=True, required=False, default=False,
                   help="Add a shortcut to Main Manu")
     @click.option("-c", "--custom-version-code", required=False,
                   help="Custom version in BASE64 encoded string")
@@ -510,9 +517,9 @@ if __name__ == '__main__':
                 versions = customization.parse_args(package_version) or None
             start_install(
                 path_to_install=install_dir,
+                package_versions=versions,
                 add_desktop_shortcut=add_desktop_shortcut,
                 add_main_menu_shortcut=add_main_menu_shortcut,
-                package_versions=versions
             )
 
     install()

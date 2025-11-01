@@ -1,3 +1,6 @@
+"""
+Customize installation with different package versions
+"""
 import base64
 import re
 

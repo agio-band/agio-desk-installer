@@ -66,7 +66,11 @@ def build_archive_url(owner: str, repo: str, ref_type: str, ref_value: str) -> s
     elif ref_type == "branch":
         return f"https://github.com/{owner}/{repo}/archive/refs/heads/{ref_value}.zip"
     else:
-        raise ValueError("ref_type должен быть 'commit', 'tag' или 'branch'")
+        raise ValueError("ref_type must be 'commit', 'tag' or 'branch'")
+
+
+def package_name_to_agio_band_git_repository_url(package_name: str) -> str:
+    return f"https://github.com/agio-band/{package_name.replace('_', '-')}.git"
 
 
 def get_package_installation_url(repository_url: str, commit: str = None, tag: str = None, branch: str = None) -> str:
