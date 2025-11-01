@@ -28,3 +28,12 @@ agio_desk:commit=d947745
 ```shell
 agio-desk-setup -p agio_core:branch=dev -p agio_pipe:tag=0.0.1 -p agio_desk:commit=d947745
 ```
+
+# Build
+
+-  прописать путь к пакету `agio_core` в `PYTHONPATH`
+-  установить `venv` командой `uv sync`
+- сделать симлинк исполняемого файла `uv` (или `uv,exe`) в директорию `assets/`
+- запустить сборку `./build.sh` или `./build.cmd`
+
+Результат будет сохранён в диреткории `./dest`

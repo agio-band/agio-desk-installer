@@ -5,6 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11, <3.12"
 dependencies = [
+    "agio-core",
+    "click>=8.3.0",
+    "nuitka>=2.8.4",
     "pip>=25.2",
     "pyside6>=6.10.0",
 ]
+
+[tool.uv.sources]
+agio-core = { git = "http://192.168.0.206:3000/agio-band/agio-core" }

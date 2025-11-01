@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 from agio.tools import app_dirs
-from agio_desk_installer.install_tools import repository
+from agio_desk_installer.install_tools import repository, file_tools
 from agio_desk_installer.install_tools.customization import parse_line
 
 logger = logging.getLogger(__name__)
@@ -22,13 +22,12 @@ DEFAULT_VENV_PACKAGES = (
     'agio_publish_simple',
     'agio_launcher'
 )
-ASSETS_DIR = Path(__file__, '..').resolve().parent.joinpath('assets')
+
 BIN_EXT = '.exe' if os.name == 'nt' else ''
 
 # variables
 def get_uv_executable() -> str:
-    # return 'uv'
-    uv_exec = ASSETS_DIR.joinpath('uv'+BIN_EXT)
+    uv_exec = file_tools.get_assets('uv'+BIN_EXT)
     return str(uv_exec)
 
 
@@ -47,7 +46,8 @@ def _exec_uv_command(command: list[str], workdir: str = None) -> None:
     workdir = Path(workdir or app_dirs.default_env_dir())
     logger.debug(f'CMD: {" ".join(cmd)}')
     envs = os.environ.copy()
-    envs['VIRTUAL_ENV'] = workdir.joinpath('.venv').as_posix()
+    # envs['VIRTUAL_ENV'] = workdir.joinpath('.venv').as_posix()
+    envs.pop('VIRTUAL_ENV', None)
     subprocess.run(cmd, cwd=workdir.as_posix(), env=envs)
 
 

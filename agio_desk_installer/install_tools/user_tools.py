@@ -1,12 +1,13 @@
 import json
+import logging
 import os
-import sys
 import platform
 import shutil
 from pathlib import Path
-import logging
 
 from agio.tools import app_dirs
+from agio_desk_installer.install_tools import file_tools
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -14,7 +15,6 @@ try:
 except ImportError:
     win32com = None
 
-ICONS_PATH = Path(__file__, '../../assets/icons').resolve()
 
 # Paths
 def get_desktop_path() -> Path:
@@ -96,6 +96,7 @@ def create_windows_shortcut(
     icon = icon or get_icon_path('ico')
     shortcut.IconLocation = str(icon)
     shortcut.save()
+    # todo create for console version
     return shortcut_path
 
 
@@ -115,13 +116,14 @@ def create_linux_shortcut(
 Type=Application
 Name={shortcut_name}
 Exec={cmd}
-Icon={get_icon_path('png') or ""}
+Icon={icon or get_icon_path('png') or ""}
 Path={workdir or Path(executable).parent}
 Terminal=false
 Categories=Utility;
 """
     with open(shortcut_path, "w", encoding="utf-8") as f:
         f.write(content)
+    # todo create for console version
 
     os.chmod(shortcut_path, 0o755)
     return shortcut_path
@@ -178,8 +180,9 @@ def delete_shortcuts(shortcut_name):
 
 
 def get_icon_path(ext):
-    full_path = ICONS_PATH / f"icon.{ext}"
+    full_path = Path(file_tools.get_assets(f"icons/icon.{ext}"))
     if not full_path.exists():
+        print(f"Cannot find icon {full_path}")
         return
     icon_in_config = app_dirs.config_dir('icons', full_path.name)
     if icon_in_config.exists():

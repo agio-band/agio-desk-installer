@@ -12,10 +12,8 @@ from PySide6.QtWidgets import *
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from agio.tools import app_dirs
-from agio_desk_installer.install_tools import start_install, customization, user_tools
+from agio_desk_installer.install_tools import start_install, customization, user_tools, file_tools
 
-
-IS_FROZEN =  '__compiled__' in globals()
 
 SIGN_IN_URL = 'https://platform.agio.services/login'
 SIGN_UP_URL = 'https://platform.agio.services/signup'
@@ -94,7 +92,6 @@ DONE_TEXT = f'''
 <p>\u2014 The agio band</p></body>
 </html>
 '''
-ICONS_PATH = os.path.join(os.path.dirname(__file__), "assets/icons")
 
 
 def get_default_install_path():
@@ -106,7 +103,7 @@ class AgioDeskInstallerDialog(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
         self.setWindowTitle("agio.desk Installer")
-        icon = self.prepare_svg(os.path.join(ICONS_PATH, "favicon-o-knob-16.svg"))
+        icon = self.prepare_svg(file_tools.get_assets("icons/favicon-o-knob-16.svg"))
         self.setWindowIcon(icon)
 
         self.centralwidget = QWidget()
@@ -128,7 +125,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.label_welcome.setFont(font)
         self.top_ly.addWidget(self.label_welcome)
         # icon
-        self.label_icon = QSvgWidget(os.path.join(ICONS_PATH, "logo.svg"))
+        self.label_icon = QSvgWidget(file_tools.get_assets("icons/logo.svg"))
         self.label_icon.setFixedSize(QSize(200, 90))
         self.top_ly.addWidget(self.label_icon)
 
@@ -284,7 +281,6 @@ class AgioDeskInstallerDialog(QMainWindow):
     def init_ui(self):
         self.apply_style()
         prefs = user_tools.load_info_file()
-        print('LOAD PREFS', prefs)
         install_path = prefs.get('path_to_install', get_default_install_path())
         self.installation_dir_le.setText(install_path)
         self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
@@ -431,10 +427,8 @@ class AgioDeskInstallerDialog(QMainWindow):
 
     # processing
     def start_installation_process(self, install_dir, **kwargs):
-        if IS_FROZEN:
-            cmd = [sys.executable]
-        else:
-            cmd = [sys.executable, Path(__file__).resolve().as_posix()]
+
+        cmd = file_tools.get_executable()
         cmd.extend(['--install-dir', install_dir])
         if kwargs.get('desktop_shortcut'):
             cmd.append('--add-desktop-shortcut')
@@ -488,10 +482,8 @@ class CheckBoxLabel(QLabel):
 
 
 if __name__ == '__main__':
-    import os
     import click
     # agio-drive-setup --install-dir ~/agio --add-shortcuts
-    os.chdir(os.path.expanduser('~'))
     @click.command()
     @click.option("-i", "--install-dir", type=str, required=False, default=None,
                   help="Path for installation")

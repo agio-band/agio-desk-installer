@@ -9,13 +9,12 @@ uv run --active python -m nuitka ^
   --standalone ^
   --enable-plugin=pyside6 ^
   --follow-imports ^
-  --include-package=agio_desk_installer ^
   --include-qt-plugins=platforms ^
-  --include-module=click ^
-  --output-dir=. ^
+  --output-dir=.\dest ^
   --remove-output ^
-  --output-filename=agio_desk_installer_ui.exe ^
+  --output-filename=agio_desk_installer.exe ^
   --windows-icon-from-ico=agio_desk_installer/assets/icons/icon.ico ^
-  --include-data-dir=agio_desk_installer/assets=assets agio_desk_installer/main.py
+  --include-data-dir=agio_desk_installer/assets=assets ^
+  agio_desk_installer/main.py
 
-pause
+::  --include-module=click ^
