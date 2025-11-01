@@ -1,19 +1,16 @@
-import json
-import platform
-import subprocess
-import sys, os
+import sys
 import traceback
 from pathlib import Path
+
 from PySide6.QtCore import *
 from PySide6.QtCore import QSize, QProcess
 from PySide6.QtGui import *
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import *
 from PySide6.QtSvgWidgets import QSvgWidget
+from PySide6.QtWidgets import *
 
 from agio.tools import app_dirs
 from agio_desk_installer.install_tools import start_install, customization, user_tools, file_tools
-
 
 SIGN_IN_URL = 'https://platform.agio.services/login'
 SIGN_UP_URL = 'https://platform.agio.services/signup'
@@ -172,7 +169,6 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.browse_ly = QHBoxLayout()
         self.installation_dir_le = QLineEdit()
         self.installation_dir_le.setPlaceholderText("Installation Path")
-        # self.installation_dir_le.setText(get_default_install_path())
         self.browse_ly.addWidget(self.installation_dir_le)
         self.toolButton = QPushButton("Browse...", clicked=self.on_click_browse)
         self.browse_ly.addWidget(self.toolButton)
@@ -182,12 +178,10 @@ class AgioDeskInstallerDialog(QMainWindow):
 
         self.add_desktop_shortcut_cbx = QCheckBox('', checked=True)
         self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.add_desktop_shortcut_cbx)
-        # self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, QLabel("Add Desktop Shortcut"))
         self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, CheckBoxLabel(self.add_desktop_shortcut_cbx, "Add Desktop Shortcut"))
 
         self.add_menu_shortcut_cbx = QCheckBox('', checked=True)
         self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.add_menu_shortcut_cbx)
-        # self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, QLabel("Add Main Menu Shortcut"))
         self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, CheckBoxLabel(self.add_menu_shortcut_cbx, "Add Main Menu Shortcut"))
 
         self.settings_ly.addLayout(self.formLayout)

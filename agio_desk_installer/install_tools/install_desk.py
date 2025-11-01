@@ -16,8 +16,8 @@ DEFAULT_VENV_PACKAGES = (
     'agio_core',
     'agio_desk',
     'agio_broker',
-    # temporary common packages
-    # 'agio_drive', # SOON
+    # temporary included packages for first version
+    'agio_drive',
     'agio_pipe',
     'agio_publish_simple',
     'agio_launcher'
@@ -46,7 +46,6 @@ def _exec_uv_command(command: list[str], workdir: str = None) -> None:
     workdir = Path(workdir or app_dirs.default_env_dir())
     logger.debug(f'CMD: {" ".join(cmd)}')
     envs = os.environ.copy()
-    # envs['VIRTUAL_ENV'] = workdir.joinpath('.venv').as_posix()
     envs.pop('VIRTUAL_ENV', None)
     subprocess.run(cmd, cwd=workdir.as_posix(), env=envs)
 
@@ -66,9 +65,9 @@ def create_default_venv(env_path: str = None) -> Path:
 
 
 def install_packages(*pkgs, workdir, refresh_packages=False):
-    cmd = ['pip', 'install']#, '--quiet']
+    cmd = ['pip', 'install']
     if refresh_packages:
-        cmd.append('--refresh') # --refresh-package
+        cmd.append('--refresh')
     _exec_uv_command([*cmd, *pkgs], workdir=workdir)
 
 
