@@ -14,6 +14,7 @@ try:
 except ImportError:
     win32com = None
 
+ICONS_PATH = Path(__file__, '../../assets/icons').resolve()
 
 # Paths
 def get_desktop_path() -> Path:
@@ -92,8 +93,8 @@ def create_windows_shortcut(
     if args:
         shortcut.Arguments = " ".join(args)
     shortcut.WorkingDirectory = str(workdir or Path(executable).parent)
-    if icon:
-        shortcut.IconLocation = str(icon)
+    icon = icon or get_icon_path('ico')
+    shortcut.IconLocation = str(icon)
     shortcut.save()
     return shortcut_path
 
@@ -114,7 +115,7 @@ def create_linux_shortcut(
 Type=Application
 Name={shortcut_name}
 Exec={cmd}
-Icon={icon or ""}
+Icon={get_icon_path('png') or ""}
 Path={workdir or Path(executable).parent}
 Terminal=false
 Categories=Utility;
@@ -176,10 +177,16 @@ def delete_shortcuts(shortcut_name):
     return True
 
 
-if __name__ == "__main__":
-    create_desktop_shortcut("MyApp", sys.executable , icon=None)
-    create_main_menu_shortcut("MyApp", sys.executable , icon=None)
-    delete_shortcuts("MyApp")
+def get_icon_path(ext):
+    full_path = ICONS_PATH / f"icon.{ext}"
+    if not full_path.exists():
+        return
+    icon_in_config = app_dirs.config_dir('icons', full_path.name)
+    if icon_in_config.exists():
+        return icon_in_config.as_posix()
+    icon_in_config.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(full_path, icon_in_config)
+    return icon_in_config.as_posix()
 
 
 def save_info_file(data: dict):

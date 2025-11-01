@@ -52,7 +52,7 @@ def _exec_uv_command(command: list[str], workdir: str = None) -> None:
 
 
 # install
-def create_default_venv(env_path: str = None) -> str:
+def create_default_venv(env_path: str = None) -> Path:
     # get dir
     env_path = Path(env_path or app_dirs.default_env_dir())
     logger.debug("Creating default venv")
