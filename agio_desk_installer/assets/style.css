@@ -1,24 +1,4 @@
-/*QWidget {*/
-/*    background-color: rgb(50, 50, 50);*/
-/*    color: rgb(230, 230, 230)*/
-/*}*/
-
-/*QPushButton {*/
-/*  background-color: rgb(45, 45, 45);*/
-/*  color: rgb(240, 240, 240);*/
-/*  border: 1px solid rgb(70, 70, 70);*/
-/*   border-radius: 6px; padding: 6px 14px;*/
-/*}*/
-/*QPushButton:hover {*/
-/*  background-color: rgb(65, 65, 65);*/
-/*}*/
-
-/*QPushButton:pressed {*/
-/*  background-color: rgb(85, 85, 85);*/
-/*}*/
-
-
-QMainWindow {
+QWidget {
     background-color: #272727;
     color: #dddddd;
 }

@@ -221,9 +221,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         return QIcon(pixmap)
 
     def closeEvent(self, event) -> None:
-        if not self.forced_exit and not QMessageBox.question(
-                self,
-                "Cancel",
+        if not self.forced_exit and not QMessageBox.question(self, "Cancel",
                 "Cancel install and exit ?") == QMessageBox.Yes:
             event.ignore()
         else:
@@ -345,7 +343,6 @@ class AgioDeskInstallerDialog(QMainWindow):
 
     def open_logs_dir(self):
         log_dir = app_dirs.logs_dir()
-        print(log_dir)
         if log_dir.exists():
             open_path(log_dir)
         else:
