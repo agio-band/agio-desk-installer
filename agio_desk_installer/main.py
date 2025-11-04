@@ -9,8 +9,9 @@ from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtWidgets import *
 
+from agio.tools.paths import open_path
+from agio_desk_installer.install_tools import setup_logs, start_install, customization, file_tools
 from agio.tools import app_dirs
-from agio_desk_installer.install_tools import start_install, customization, user_tools, file_tools
 from agio_desk_installer.labels import WELCOME_TEXT, DONE_TEXT
 
 logger = logging.getLogger(__name__)
@@ -189,6 +190,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         # QShortcut(QKeySequence("Alt+5"), self, activated=self.set_page_update)
         QShortcut(QKeySequence("Ctrl+v"), self, activated=self.read_custom_versions)
         QShortcut(QKeySequence("Ctrl+r"), self, activated=self.reset_custom_versions)
+        QShortcut(QKeySequence("Ctrl+L"), self, activated=self.open_logs_dir, context=Qt.ApplicationShortcut)
 
         self.forced_exit = False
 
@@ -200,6 +202,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.installation_path_le.setText(str(install_path))
         self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
         self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
+        logger.info('Installer started....')
 
     def apply_style(self):
         style_file = Path(__file__).parent / "assets/style.css"
@@ -340,6 +343,15 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.custom_versions = {}
         self.update_custom_versions_label()
 
+    def open_logs_dir(self):
+        log_dir = app_dirs.logs_dir()
+        print(log_dir)
+        if log_dir.exists():
+            open_path(log_dir)
+        else:
+            QMessageBox.critical(self, "Error", "Logs directory does not exist")
+
+
     # processing
     def start_installation_process(self, install_path, **kwargs):
 
@@ -357,8 +369,9 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.proc.setProcessChannelMode(QProcess.MergedChannels)
         self.proc.readyRead.connect(self.on_process_output)
         self.proc.finished.connect(self.on_process_finished)
-
-        self.output_logs.append(f'CMD: {" ".join(map(str, cmd))}')
+        msg = f'CMD: {" ".join(map(str, cmd))}'
+        logger.info(msg)
+        self.output_logs.append(msg)
         self.proc.start(cmd[0], cmd[1:])
         if self.proc.error() == QProcess.ProcessError.FailedToStart:
             self.on_process_finished(1, None, self.proc.errorString())

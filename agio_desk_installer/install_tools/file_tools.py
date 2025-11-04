@@ -21,3 +21,4 @@ def get_assets(*args) -> str:
     if not path.exists():
         raise FileNotFoundError(path)
     return path.as_posix()
+

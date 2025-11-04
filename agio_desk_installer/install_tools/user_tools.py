@@ -96,6 +96,7 @@ def create_windows_shortcut(
     shortcut.IconLocation = str(icon)
     shortcut.save()
     # todo create for console version
+    logger.info('Shortcut created: %s', shortcut_path)
     return shortcut_path
 
 
@@ -125,6 +126,7 @@ Categories=Utility;
     # todo create for console version
 
     os.chmod(shortcut_path, 0o755)
+    logger.info('Shortcut created: %s', shortcut_path)
     return shortcut_path
 
 
@@ -151,6 +153,7 @@ def create_macos_shortcut(
 
     os.system(f"osacompile -o '{shortcut_path}' '{tmp_script}'")
     tmp_script.unlink(missing_ok=True)
+    logger.info('Shortcut created: %s', shortcut_path)
     return shortcut_path
 
 
@@ -174,14 +177,14 @@ def delete_shortcuts(shortcut_name):
                 else:
                     file.unlink()
             except Exception as e:
-                print(f"Cannot remove {file}: {e}")
+                logger.error(f"Cannot remove {file}: {e}")
     return True
 
 
 def get_icon_path(ext):
     full_path = Path(file_tools.get_assets(f"icons/icon.{ext}"))
     if not full_path.exists():
-        print(f"Cannot find icon {full_path}")
+        logger.error(f"Cannot find icon: {full_path}")
         return
     icon_in_config = app_dirs.config_dir('icons', full_path.name)
     if icon_in_config.exists():

@@ -105,18 +105,18 @@ def install(install_path: str = None, package_versions: list[str] = None, **kwar
     default_venv_dir = app_dirs.default_env_install_dir(install_path)
     workdir = create_default_venv(default_venv_dir)
     # get package list
-    print('Collecting packages...', flush=True)
+    logger.info('Collecting packages...')
     pacakge_list = list(get_package_list(package_versions))
     # install packages
-    print('Packages to install')
+    logger.info('Packages to install:')
     for pkg_name in pacakge_list:
-        print(pkg_name)
+        logger.info(pkg_name)
     install_packages(*pacakge_list, workdir=workdir)
     # create global command bin
     agio_exec = get_agio_bin_path(workdir)
-    print('agio executable:', agio_exec, flush=True)
+    logger.info('agio executable: %s', agio_exec)
     if not Path(agio_exec).exists():
-        raise FileNotFoundError(f'executable not found {agio_exec}')
+        raise FileNotFoundError(f'Executable not found {agio_exec}')
     make_global_command_executable(agio_exec)
     return dict(
             executable=agio_exec,
