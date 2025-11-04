@@ -49,6 +49,7 @@ if defined GLOBAL_UV_PATH (
 
 uv venv --clear
 uv sync
+uv pip install pywin32
 
 call "%~dp0.venv\Scripts\activate.bat"
 
@@ -74,13 +75,15 @@ uv run --active python -m nuitka ^
   --follow-imports ^
   --assume-yes-for-downloads ^
   --include-package=agio ^
-  --include-package=agio.tools ^
+  --include-package=win32com ^
   --include-qt-plugins=platforms ^
   --output-dir="%OUTPUT_DIR%" ^
   --remove-output ^
   --output-filename=agio_desk_installer.exe ^
   --windows-icon-from-ico=agio_desk_installer/assets/icons/icon.ico ^
-  --include-data-dir=agio_desk_installer/assets=assets agio_desk_installer/main.py
+  --include-data-dir=agio_desk_installer/assets=assets ^
+  --include-data-files=agio_desk_installer/assets/uv.exe=assets/ ^
+  agio_desk_installer/main.py
 
 rem --show-scons --verbose ^
 
