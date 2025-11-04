@@ -1,7 +1,7 @@
 import sys
 import traceback
 from pathlib import Path
-
+import logging
 from PySide6.QtCore import *
 from PySide6.QtCore import QSize, QProcess
 from PySide6.QtGui import *
@@ -11,88 +11,9 @@ from PySide6.QtWidgets import *
 
 from agio.tools import app_dirs
 from agio_desk_installer.install_tools import start_install, customization, user_tools, file_tools
+from agio_desk_installer.labels import WELCOME_TEXT, DONE_TEXT
 
-SIGN_IN_URL = 'https://platform.agio.services/login'
-SIGN_UP_URL = 'https://platform.agio.services/signup'
-DOCS_URL = 'https://doki.agio.services'
-SUPPORT_UEL = 'https://t.me/agio_support_bot'
-
-WELCOME_TEXT = """
-<html>
-<head/>
-<body>
-
-    <p>
-        We're excited to have you on board!
-    </p>
-    <p>
-        This installer will guide you through the installation process.<br/>
-        To get started, simply click the <span style=\" font-weight:600;\">NEXT</span> button below.
-    </p>
-    <p>
-        Let\u2019s get things set up!
-    </p>
-</body>
-</html>
-"""
-DONE_TEXT = f'''
-<html>
-<head/>
-<body>
-    <p><span style=" font-size:12pt; font-weight:600;">
-        Thank you for installing agio.desk!</span>
-    </p>
-    <p>We appreciate you choosing our software. You're all set to begin using it.</p>
-    <ul style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;">
-    
-        <li style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
-            Want to access cloud features or manage your account? 
-            <br>
-            <a href="{SIGN_IN_URL}">
-            Log in
-            </a>
-                or 
-            <a href="{SIGN_UP_URL}">
-                Create an account
-            </a> 
-            on our website.
-         </li>
-    
-        <li style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
-            For help getting started, visit our 
-            <a href="{DOCS_URL}">
-                <span style=" text-decoration: underline; color:#1d99f3;">
-                    Getting Started Guide
-                </span>
-            </a>
-        </li>
-    
-        <li style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
-            For complete documentation, check out our <a href="{DOCS_URL}">
-            <span style="text-decoration: underline; color:#1d99f3;">
-                Full Docs
-            </span>
-            </a>
-        </li>
-    
-        <li style="margin-top: 2px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">
-            Need support? Reach us anytime at 
-            <a href="{SUPPORT_UEL}">
-                <span style=" text-decoration: underline; color:#1d99f3;">
-                    Support Chat
-                </span>
-            </a>
-        </li>
-    
-</ul>
-<p>We wish you all the best and hope you enjoy using <b>agio Platform!</b></p>
-<p>\u2014 The agio band</p></body>
-</html>
-'''
-
-
-def get_default_install_path():
-    return Path(app_dirs.install_dir(), 'agio-desk').as_posix()
+logger = logging.getLogger(__name__)
 
 
 class AgioDeskInstallerDialog(QMainWindow):
@@ -167,9 +88,9 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.formLayout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.browse_ly = QHBoxLayout()
-        self.installation_dir_le = QLineEdit()
-        self.installation_dir_le.setPlaceholderText("Installation Path")
-        self.browse_ly.addWidget(self.installation_dir_le)
+        self.installation_path_le = QLineEdit()
+        self.installation_path_le.setPlaceholderText("Installation Path")
+        self.browse_ly.addWidget(self.installation_path_le)
         self.toolButton = QPushButton("Browse...", clicked=self.on_click_browse)
         self.browse_ly.addWidget(self.toolButton)
 
@@ -274,9 +195,9 @@ class AgioDeskInstallerDialog(QMainWindow):
     # ui
     def init_ui(self):
         self.apply_style()
-        prefs = user_tools.load_info_file()
-        install_path = prefs.get('path_to_install', get_default_install_path())
-        self.installation_dir_le.setText(install_path)
+        prefs = app_dirs.get_global_config()
+        install_path = prefs.get('install_path', app_dirs.install_dir())
+        self.installation_path_le.setText(str(install_path))
         self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
         self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
 
@@ -315,7 +236,7 @@ class AgioDeskInstallerDialog(QMainWindow):
 
     def on_click_install(self):
         self.start_installation_process(
-            install_dir=self.installation_dir_le.text(),
+            install_path=self.installation_path_le.text(),
             desktop_shortcut=self.add_desktop_shortcut_cbx.isChecked(),
             main_menu_shortcut=self.add_menu_shortcut_cbx.isChecked(),
             versions_code=self.custom_versions.get('code')
@@ -325,7 +246,7 @@ class AgioDeskInstallerDialog(QMainWindow):
     def on_click_browse(self):
         f = QFileDialog.getExistingDirectory(self, "Browse")
         if f:
-            self.installation_dir_le.setText(f)
+            self.installation_path_le.setText(f)
 
     def on_click_back(self):
         self.set_page_settings()
@@ -420,10 +341,10 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.update_custom_versions_label()
 
     # processing
-    def start_installation_process(self, install_dir, **kwargs):
+    def start_installation_process(self, install_path, **kwargs):
 
         cmd = file_tools.get_executable()
-        cmd.extend(['--install-dir', install_dir])
+        cmd.extend(['--install-path', install_path])
         if kwargs.get('desktop_shortcut'):
             cmd.append('--add-desktop-shortcut')
         if kwargs.get('main_menu_shortcut'):
@@ -449,7 +370,7 @@ def center_on_screen(widget, app):
     if current_screen is None:
         current_screen = app.primaryScreen()
         if current_screen is None:
-            print("Screens not found")
+            logger.error("Screens not found")
             return
     screen_geometry = current_screen.availableGeometry()
     widget_geometry = widget.frameGeometry()
@@ -477,9 +398,10 @@ class CheckBoxLabel(QLabel):
 
 if __name__ == '__main__':
     import click
-    # agio-drive-setup --install-dir ~/agio --add-shortcuts
+    # agio-drive-setup --install-path ~/agio --add-shortcuts
+
     @click.command()
-    @click.option("-i", "--install-dir", type=str, required=False, default=None,
+    @click.option("-i", "--install-path", type=str, required=False, default=None,
                   help="Path for installation")
     @click.option("-d", "--add-desktop-shortcut", is_flag=True, required=False, default=False,
                   help="Add a shortcut to desktop")
@@ -489,9 +411,9 @@ if __name__ == '__main__':
                   help="Custom version in BASE64 encoded string")
     @click.option("-p", "--package-version", required=False, multiple=True,
                   help="Package version in format <package-name>:<ref-type>=<ref-value>")
-    def install(install_dir: str, add_desktop_shortcut: bool, add_main_menu_shortcut: bool,
+    def install(install_path: str, add_desktop_shortcut: bool, add_main_menu_shortcut: bool,
                 custom_version_code: str, package_version: list[str]|None) -> None:
-        if not install_dir:
+        if not install_path:
             open_installer_dialog()
         else:
             versions = None
@@ -502,7 +424,7 @@ if __name__ == '__main__':
             elif package_version:
                 versions = customization.parse_args(package_version) or None
             start_install(
-                path_to_install=install_dir,
+                install_path=install_path,
                 package_versions=versions,
                 add_desktop_shortcut=add_desktop_shortcut,
                 add_main_menu_shortcut=add_main_menu_shortcut,

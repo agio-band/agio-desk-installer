@@ -18,9 +18,9 @@ DEFAULT_VENV_PACKAGES = (
     'agio_broker',
     # temporary included packages for first version
     'agio_drive',
-    'agio_pipe',
-    'agio_publish_simple',
-    'agio_launcher'
+    # 'agio_pipe',
+    # 'agio_publish_simple',
+    # 'agio_launcher'
 )
 
 BIN_EXT = '.exe' if os.name == 'nt' else ''
@@ -43,7 +43,7 @@ def _exec_uv_command(command: list[str], workdir: str = None) -> None:
         get_uv_executable(),
         *command,
     ]
-    workdir = Path(workdir or app_dirs.default_env_dir())
+    workdir = Path(workdir or app_dirs.default_env_install_dir())
     logger.debug(f'CMD: {" ".join(cmd)}')
     envs = os.environ.copy()
     envs.pop('VIRTUAL_ENV', None)
@@ -51,9 +51,9 @@ def _exec_uv_command(command: list[str], workdir: str = None) -> None:
 
 
 # install
-def create_default_venv(env_path: str = None) -> Path:
+def create_default_venv(env_path: str|Path = None) -> Path:
     # get dir
-    env_path = Path(env_path or app_dirs.default_env_dir())
+    env_path = Path(env_path or app_dirs.default_env_install_dir())
     logger.debug("Creating default venv")
     env_path.mkdir(parents=True, exist_ok=True)
     # init project
@@ -64,10 +64,10 @@ def create_default_venv(env_path: str = None) -> Path:
     return env_path
 
 
-def install_packages(*pkgs, workdir, refresh_packages=False):
+def install_packages(*pkgs, workdir, refresh_packages=True):
     cmd = ['pip', 'install']
     if refresh_packages:
-        cmd.append('--refresh')
+        cmd.append('--reinstall')
     _exec_uv_command([*cmd, *pkgs], workdir=workdir)
 
 
@@ -77,7 +77,7 @@ def make_global_command_executable(exec_file: str, file_name: str = None) -> str
     bin_path_dir.mkdir(parents=True, exist_ok=True)
     binary_file_name = file_name or Path(exec_file).name
     binary_file_path = Path(bin_path_dir, binary_file_name)
-    if binary_file_path.exists():
+    if binary_file_path.exists() or binary_file_path.is_symlink():
         binary_file_path.unlink()
     logger.info(f'Creating link {binary_file_path} -> {exec_file}')
     Path(binary_file_path).symlink_to(exec_file)
@@ -100,17 +100,23 @@ def get_package_list(versions: list[str] = None):
 
 
 # main
-def install(path_to_install: str = None, package_versions: list[str] = None, **kwargs) -> dict:
+def install(install_path: str = None, package_versions: list[str] = None, **kwargs) -> dict:
     # create new venv
-    workdir = create_default_venv(path_to_install)
+    default_venv_dir = app_dirs.default_env_install_dir(install_path)
+    workdir = create_default_venv(default_venv_dir)
     # get package list
-    pacakge_list = get_package_list(package_versions)
+    print('Collecting packages...', flush=True)
+    pacakge_list = list(get_package_list(package_versions))
     # install packages
+    print('Packages to install')
+    for pkg_name in pacakge_list:
+        print(pkg_name)
     install_packages(*pacakge_list, workdir=workdir)
     # create global command bin
     agio_exec = get_agio_bin_path(workdir)
+    print('agio executable:', agio_exec, flush=True)
     if not Path(agio_exec).exists():
-        raise FileNotFoundError(f'agio executable not found {agio_exec}')
+        raise FileNotFoundError(f'executable not found {agio_exec}')
     make_global_command_executable(agio_exec)
     return dict(
             executable=agio_exec,

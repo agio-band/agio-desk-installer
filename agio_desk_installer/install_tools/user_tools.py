@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import platform
@@ -190,29 +189,3 @@ def get_icon_path(ext):
     icon_in_config.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(full_path, icon_in_config)
     return icon_in_config.as_posix()
-
-
-def save_info_file(data: dict):
-    install_info_file = app_dirs.config_dir('agio-desk.json')
-    install_info_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(install_info_file, 'w') as f:
-        json.dump(data, f)
-
-
-def load_info_file():
-    install_info_file = app_dirs.config_dir('agio-desk.json')
-    if not install_info_file.exists():
-        return {}
-    try:
-        with open(install_info_file, 'r') as f:
-            data = json.load(f)
-    except Exception as e:
-        logger.error('Failed read info file', e)
-        return {}
-    return data
-
-
-def delete_info_file():
-    file = app_dirs.config_dir('agio-desk.json')
-    if file.exists():
-        file.unlink()

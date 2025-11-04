@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 from . import install_desk, user_tools
-from .user_tools import save_info_file, load_info_file, delete_info_file
+from agio.tools import app_dirs
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +15,10 @@ def start_install(**kwargs):
     #   'add_main_menu_shortcut': True,
     #   'package_versions': ('agio-core:branch=dev', 'agio-pipe:tag=0.0.1', 'agio-desk:commit=d947745')
     # }
+    app_dirs.save_global_config(kwargs)
     print('Start installation...', flush=True)
     result = install_desk.install(**kwargs)
+    print("EXECUTABLE FILE", result['executable'], flush=True)
     kw = dict(
         shortcut_name='agio.desk',
         executable_file=result['executable'],
@@ -29,18 +31,17 @@ def start_install(**kwargs):
         user_tools.create_desktop_shortcut(**kw)
     if kwargs.get('add_main_menu_shortcut'):
         user_tools.create_main_menu_shortcut(**kw)
-    save_info_file(kwargs)
     print('Installing done!', flush=True)
 
 
 def uninstall(delete_user_prefs=False):
-    info = load_info_file()
+    info = app_dirs.get_global_config()
     install_path = info.get('path_to_install')
     if install_path:
         install_path = Path(install_path)
         if install_path.is_dir():
             shutil.rmtree(install_path)
     if delete_user_prefs:
-        delete_info_file()
+        app_dirs.delete_global_config_file()
 
 

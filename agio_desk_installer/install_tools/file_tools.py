@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 IS_FROZEN = globals().get('__compiled__', None)
-ASSET_DIR = Path(__file__, '../../../assets').resolve()
+ASSET_DIR = Path(__file__, '../../../assets' if IS_FROZEN else '../../assets').resolve()
 
 
 def get_executable() -> list[str]:
