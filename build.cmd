@@ -85,8 +85,11 @@ uv run --active python -m nuitka ^
   --include-data-files=agio_desk_installer/assets/uv.exe=assets/ ^
   agio_desk_installer/main.py
 
+rem To show details:
 rem --show-scons --verbose ^
 
+rem To hide console:
+rem --windows-console-mode=hide ^
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
