@@ -11,7 +11,7 @@ from PySide6.QtWidgets import *
 
 from agio.tools.paths import open_path
 from agio_desk_installer.install_tools import setup_logs, start_install, customization, file_tools
-from agio.tools import app_dirs
+from agio.tools import app_dirs, process_utils
 from agio_desk_installer.labels import WELCOME_TEXT, DONE_TEXT
 
 logger = logging.getLogger(__name__)
@@ -196,7 +196,7 @@ class AgioDeskInstallerDialog(QMainWindow):
 
     # ui
     def init_ui(self):
-        self.apply_style()
+        self.apply_style(self)
         prefs = app_dirs.get_global_config()
         install_path = prefs.get('install_path', app_dirs.install_dir())
         self.installation_path_le.setText(str(install_path))
@@ -204,10 +204,11 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
         logger.info('Installer started....')
 
-    def apply_style(self):
+    @classmethod
+    def apply_style(cls, widget):
         style_file = Path(__file__).parent / "assets/style.css"
         if style_file.is_file():
-            self.setStyleSheet(style_file.read_text())
+            widget.setStyleSheet(style_file.read_text())
 
     def prepare_svg(self, svg_path: str, size: int = 64) -> QIcon:
         renderer = QSvgRenderer(svg_path)
@@ -374,6 +375,17 @@ class AgioDeskInstallerDialog(QMainWindow):
             self.on_process_finished(1, None, self.proc.errorString())
 
 
+
+class CheckBoxLabel(QLabel):
+    def __init__(self, checkbox, *args, **kwargs):
+        super(CheckBoxLabel, self).__init__(*args, **kwargs)
+        self.checkbox = checkbox
+
+    def mouseReleaseEvent(self, event):
+        self.checkbox.setChecked(not self.checkbox.isChecked())
+        return super().mouseReleaseEvent(event)
+
+
 def center_on_screen(widget, app):
     cursor_pos: QPoint = QCursor.pos()
     current_screen: QScreen = app.screenAt(cursor_pos)
@@ -396,14 +408,19 @@ def open_installer_dialog():
     sys.exit(app.exec())
 
 
-class CheckBoxLabel(QLabel):
-    def __init__(self, checkbox, *args, **kwargs):
-        super(CheckBoxLabel, self).__init__(*args, **kwargs)
-        self.checkbox = checkbox
-
-    def mouseReleaseEvent(self, event):
-        self.checkbox.setChecked(not self.checkbox.isChecked())
-        return super().mouseReleaseEvent(event)
+def check_started_as_admin():
+    if not process_utils.is_started_as_admin():
+        app = QApplication()
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle('Admin required')
+        msg.setText('Admin privileges required.')
+        msg.setInformativeText('Restart installer as Admin to continue.')
+        btn = msg.addButton('OK', QMessageBox.AcceptRole)
+        msg.setDefaultButton(btn)
+        AgioDeskInstallerDialog.apply_style(msg)
+        msg.exec()
+        sys.exit(app.quit())
 
 
 if __name__ == '__main__':
@@ -424,8 +441,11 @@ if __name__ == '__main__':
     def install(install_path: str, add_desktop_shortcut: bool, add_main_menu_shortcut: bool,
                 custom_version_code: str, package_version: list[str]|None) -> None:
         if not install_path:
+            check_started_as_admin()
             open_installer_dialog()
         else:
+            if not process_utils.is_started_as_admin():
+                raise Exception('Admin privileges required. Restart installer as Admin to continue.')
             versions = None
             if custom_version_code and package_version:
                 raise Exception('Custom version and package version are mutually exclusive')

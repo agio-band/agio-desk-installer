@@ -110,4 +110,3 @@ LOG_SETTINGS = {
 }
 # ==== APPLY CONFIG ====
 dictConfig(LOG_SETTINGS)
-print('Logger configured')

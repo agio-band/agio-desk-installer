@@ -81,6 +81,7 @@ def make_global_command_executable(exec_file: str, file_name: str = None) -> str
         binary_file_path.unlink()
     logger.info(f'Creating link {binary_file_path} -> {exec_file}')
     Path(binary_file_path).symlink_to(exec_file)
+    # Path(binary_file_path).hardlink_to(exec_file)
     return str(binary_file_path)
 
 
