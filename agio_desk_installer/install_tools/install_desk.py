@@ -11,16 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_VENV_PYTHON_VERSION = '>=3.11.0, <3.12'
+BUNDLES_URL = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
 DEFAULT_VENV_PACKAGES = (
-    # default
     'agio_core',
     'agio_desk',
     'agio_broker',
-    # temporary included packages for first version
     'agio_drive',
-    # 'agio_pipe',
-    # 'agio_publish_simple',
-    # 'agio_launcher'
 )
 
 BIN_EXT = '.exe' if os.name == 'nt' else ''
@@ -65,6 +61,9 @@ def create_default_venv(env_path: str|Path = None) -> Path:
 
 
 def install_packages(*pkgs, workdir, refresh_packages=True):
+    print('Installing packages:')
+    for p in pkgs:
+        print(p, flush=True)
     cmd = ['pip', 'install']
     if refresh_packages:
         cmd.append('--reinstall')
@@ -85,26 +84,32 @@ def make_global_command_executable(exec_file: str, file_name: str = None) -> str
     return str(binary_file_path)
 
 
-def get_package_list(versions: list[str] = None):
-    custom_versions = {}
-    if versions is not None:
-        for custom_version in versions:
-            pkg, data = parse_line(custom_version)
-            custom_versions[pkg] = data
+def get_package_list(versions: dict = None):
+    if versions:
+        print('Selected versions:', flush=True)
+        for k, v in versions.items():
+            print(v['raw'], flush=True)
+    else:
+        print('Use latest releases for all packages:', flush=True)
     for pkg_name in DEFAULT_VENV_PACKAGES:
+        # break
         kwargs = {}
         url = repository.package_name_to_agio_band_git_repository_url(pkg_name)
-        custom_version = custom_versions.get(pkg_name, {})
+        custom_version = versions.get(pkg_name, {})
         if custom_version:
             kwargs[custom_version['ref_type']] = custom_version['value']
         yield repository.get_package_installation_url(url, **kwargs)
 
 
+def execute_workspace_on_install_callbacks(path):
+    from agio.core.workspaces import AWorkspaceManager
+
+    manager = AWorkspaceManager(root=path)
+    for pkg in manager.iter_installed_packages():
+        pkg.execute_package_callback('on_installed', manager)
+
 # main
 def install(install_path: str = None, package_versions: list[str] = None, **kwargs) -> dict:
-    # create new venv
-    default_venv_dir = app_dirs.default_env_install_dir(install_path)
-    workdir = create_default_venv(default_venv_dir)
     # get package list
     logger.info('Collecting packages...')
     pacakge_list = list(get_package_list(package_versions))
@@ -112,7 +117,12 @@ def install(install_path: str = None, package_versions: list[str] = None, **kwar
     logger.info('Packages to install:')
     for pkg_name in pacakge_list:
         logger.info(pkg_name)
+    # create new venv
+    default_venv_dir = app_dirs.default_env_install_dir(install_path)
+    workdir = create_default_venv(default_venv_dir)
     install_packages(*pacakge_list, workdir=workdir)
+    # execute packages on installation callbacks
+    execute_workspace_on_install_callbacks(workdir)
     # create global command bin
     agio_exec = get_agio_bin_path(workdir)
     logger.info('agio executable: %s', agio_exec)

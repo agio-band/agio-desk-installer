@@ -49,7 +49,7 @@ if defined GLOBAL_UV_PATH (
 
 uv venv --clear
 uv sync
-uv pip install pywin32
+uv pip install pywin32 nuitka
 
 call "%~dp0.venv\Scripts\activate.bat"
 

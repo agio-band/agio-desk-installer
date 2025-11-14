@@ -1,3 +1,5 @@
+import json
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -8,6 +10,7 @@ from PySide6.QtGui import *
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtWidgets import *
+import requests
 
 from agio.tools.paths import open_path
 from agio_desk_installer.install_tools import setup_logs, start_install, customization, file_tools
@@ -15,6 +18,7 @@ from agio.tools import app_dirs, process_utils
 from agio_desk_installer.labels import WELCOME_TEXT, DONE_TEXT
 
 logger = logging.getLogger(__name__)
+IS_WINDOWS = os.name == 'nt'
 
 
 class AgioDeskInstallerDialog(QMainWindow):
@@ -73,8 +77,13 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.page1_but = QHBoxLayout()
         self.page1_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
-        self.next = QPushButton("Next", clicked=self.on_click_next)
-        self.page1_but.addWidget(self.next)
+        self.select_bundle_cbb = BundleSelectorWidget()
+        self.page1_but.addWidget(self.select_bundle_cbb)
+        self.select_bundle_cbb.hide()
+        self.page1_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        self.page1_but.setStretch(2, 1)
+        self.next_btn = QPushButton("Next", clicked=self.on_click_next)
+        self.page1_but.addWidget(self.next_btn)
         self.page1_ly.addLayout(self.page1_but)
         self.page1_ly.setStretch(0, 1)
         self.book_widget.addWidget(self.page_1)
@@ -190,9 +199,11 @@ class AgioDeskInstallerDialog(QMainWindow):
         # QShortcut(QKeySequence("Alt+5"), self, activated=self.set_page_update)
         QShortcut(QKeySequence("Ctrl+v"), self, activated=self.read_custom_versions)
         QShortcut(QKeySequence("Ctrl+r"), self, activated=self.reset_custom_versions)
-        QShortcut(QKeySequence("Ctrl+L"), self, activated=self.open_logs_dir, context=Qt.ApplicationShortcut)
+        QShortcut(QKeySequence("Ctrl+l"), self, activated=self.open_logs_dir, context=Qt.ApplicationShortcut)
+        QShortcut(QKeySequence("Ctrl+d"), self, activated=self.switch_debug_mode, context=Qt.ApplicationShortcut)
 
         self.forced_exit = False
+        self.debug_mode = False
 
     # ui
     def init_ui(self):
@@ -304,6 +315,23 @@ class AgioDeskInstallerDialog(QMainWindow):
     #     self.label_welcome.setText('Update / Reinstall / Remove')
     #     self.book_widget.setCurrentIndex(4)
 
+    def switch_debug_mode(self):
+        if self.book_widget.currentIndex() == 0:
+            self.debug_mode = not self.debug_mode
+            self.update_bundle_selector()
+
+    def update_bundle_selector(self):
+        if self.debug_mode:
+            try:
+                self.select_bundle_cbb.reload()
+                self.select_bundle_cbb.show()
+            except Exception as e:
+                self.output_logs.append(str(e))
+                QMessageBox.critical(self, "Error", str(e))
+        else:
+            self.select_bundle_cbb.hide()
+
+
     # utils
     def read_custom_versions(self):
         if self.book_widget.currentIndex() != 0:
@@ -359,7 +387,10 @@ class AgioDeskInstallerDialog(QMainWindow):
             cmd.append('--add-desktop-shortcut')
         if kwargs.get('main_menu_shortcut'):
             cmd.append('--add-main-menu-shortcut')
-        if self.custom_versions:
+        if self.debug_mode and (versions := self.select_bundle_cbb.get_bundle_data()):
+            for item in versions:
+                cmd.extend(['--package-version', item])
+        elif self.custom_versions:
             for k, v in self.custom_versions['values'].items():
                 cmd.extend(['--package-version', v['raw']])
         # start process
@@ -386,6 +417,34 @@ class CheckBoxLabel(QLabel):
         return super().mouseReleaseEvent(event)
 
 
+class BundleSelectorWidget(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.ly = QHBoxLayout(self)
+        self.ly.addWidget(QLabel('Select Bundle:'))
+        self.cbb = QComboBox()
+        self.ly.addWidget(self.cbb)
+        self.data = None
+
+    def reload(self):
+        bundle_list_url = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
+        text_data = requests.get(bundle_list_url).text
+        self.data = json.loads(text_data)
+        names = list(self.data.get('installer_bundles', []))
+        self.cbb.clear()
+        self.cbb.addItem('default')
+        self.cbb.addItems(names)
+
+    def get_bundle_data(self):
+        if self.data:
+            current_name = self.cbb.currentText()
+            if current_name == 'default':
+                return
+            bundle = self.data['installer_bundles'].get(current_name)
+            return bundle
+
+
+
 def center_on_screen(widget, app):
     cursor_pos: QPoint = QCursor.pos()
     current_screen: QScreen = app.screenAt(cursor_pos)
@@ -409,18 +468,19 @@ def open_installer_dialog():
 
 
 def check_started_as_admin():
-    if not process_utils.is_started_as_admin():
-        app = QApplication()
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Warning)
-        msg.setWindowTitle('Admin required')
-        msg.setText('Admin privileges required.')
-        msg.setInformativeText('Restart installer as Admin to continue.')
-        btn = msg.addButton('OK', QMessageBox.AcceptRole)
-        msg.setDefaultButton(btn)
-        AgioDeskInstallerDialog.apply_style(msg)
-        msg.exec()
-        sys.exit(app.quit())
+    if IS_WINDOWS:
+        if not process_utils.is_started_as_admin():
+            app = QApplication()
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle('Admin required')
+            msg.setText('Admin privileges required.')
+            msg.setInformativeText('Restart installer as Admin to continue.')
+            btn = msg.addButton('OK', QMessageBox.AcceptRole)
+            msg.setDefaultButton(btn)
+            AgioDeskInstallerDialog.apply_style(msg)
+            msg.exec()
+            sys.exit(app.quit())
 
 
 if __name__ == '__main__':
@@ -444,7 +504,7 @@ if __name__ == '__main__':
             check_started_as_admin()
             open_installer_dialog()
         else:
-            if not process_utils.is_started_as_admin():
+            if IS_WINDOWS and not process_utils.is_started_as_admin():
                 raise Exception('Admin privileges required. Restart installer as Admin to continue.')
             versions = None
             if custom_version_code and package_version:
