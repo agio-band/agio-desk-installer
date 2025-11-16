@@ -115,9 +115,15 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.custom_versions_te = QTextEdit()
         self.custom_versions_te.setReadOnly(False)
         self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.custom_versions_te)
-        self.select_bundle_cbb.currentTextChanged.connect(lambda text: self.custom_versions_te.setVisible(text == 'custom' and self.select_bundle_cbb.isVisible()))
+        self.select_bundle_cbb.currentTextChanged.connect(self.on_bundle_changed)
         self.custom_versions_te.setPlaceholderText('Custom versions')
         self.custom_versions_te.hide()
+        self.custom_versions_te.setMaximumWidth(200)
+
+        self.bundle_content_lb = QLabel('')
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.FieldRole, self.bundle_content_lb)
+        self.bundle_content_lb.hide()
+        self.bundle_content_lb.setTextInteractionFlags(Qt.LinksAccessibleByMouse|Qt.TextSelectableByMouse)
 
         self.settings_ly.addLayout(self.formLayout)
 
@@ -212,6 +218,19 @@ class AgioDeskInstallerDialog(QMainWindow):
             self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
             self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
         logger.info('Installer started....')
+
+    def on_bundle_changed(self, bundle_name):
+        self.custom_versions_te.setVisible(bundle_name == 'custom' and self.select_bundle_cbb.isVisible())
+        if bundle_name not in ['custom', 'default']:
+            packages = self.select_bundle_cbb.get_bundle(bundle_name)
+            if packages:
+                self.bundle_content_lb.setText('\n'.join(packages))
+            else:
+                self.bundle_content_lb.setText(f'No custom Packages in bundle {bundle_name}')
+            self.bundle_content_lb.show()
+
+        else:
+            self.bundle_content_lb.hide()
 
     @classmethod
     def apply_style(cls, widget):
@@ -330,6 +349,7 @@ class AgioDeskInstallerDialog(QMainWindow):
             self.select_bundle_cbb.hide()
             self.bundle_lb.hide()
             self.custom_versions_te.hide()
+            self.bundle_content_lb.hide()
 
     def get_installation_version(self) -> dict:
         """
@@ -347,7 +367,7 @@ class AgioDeskInstallerDialog(QMainWindow):
                 values = customization.parse_custom_code(code)
                 return values
             else:
-                bundle_data = self.select_bundle_cbb.data.get('installer_bundles', {}).get(bundle)
+                bundle_data = self.select_bundle_cbb.get_bundle(bundle)
                 if not bundle_data:
                     raise Exception('Bundle "{}" not found'.format(bundle))
                 values = customization.parse_custom_code('\n'.join(bundle_data))
@@ -430,6 +450,9 @@ class BundleSelectorWidget(QComboBox):
                 return
             bundle = self.data['installer_bundles'].get(current_name)
             return bundle
+
+    def get_bundle(self, name):
+        return self.data.get('installer_bundles', {}).get(name)
 
 
 
