@@ -69,19 +69,10 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.label_step1.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
         self.page1_ly.addWidget(self.label_step1)
 
-        self.custom_versions_lb = QLabel()
-        self.custom_versions_lb.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
-        self.page1_ly.addWidget(self.custom_versions_lb)
-
         self.page1_but = QHBoxLayout()
         self.page1_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
-        self.select_bundle_cbb = BundleSelectorWidget()
-        self.page1_but.addWidget(self.select_bundle_cbb)
-        self.select_bundle_cbb.hide()
-        self.page1_but.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
-        self.page1_but.setStretch(2, 1)
+
         self.next_btn = QPushButton("Next", clicked=self.on_click_next)
         self.page1_but.addWidget(self.next_btn)
         self.page1_ly.addLayout(self.page1_but)
@@ -114,6 +105,19 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.add_menu_shortcut_cbx = QCheckBox('', checked=True)
         self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.add_menu_shortcut_cbx)
         self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, CheckBoxLabel(self.add_menu_shortcut_cbx, "Add Main Menu Shortcut"))
+
+        self.select_bundle_cbb = BundleSelectorWidget()
+        self.bundle_lb = QLabel("Bundle")
+        self.select_bundle_cbb.setVisible(bool(os.getenv('DEBUG')))
+        self.bundle_lb.setVisible(bool(os.getenv('DEBUG')))
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.bundle_lb)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.select_bundle_cbb)
+        self.custom_versions_te = QTextEdit()
+        self.custom_versions_te.setReadOnly(False)
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.custom_versions_te)
+        self.select_bundle_cbb.currentTextChanged.connect(lambda text: self.custom_versions_te.setVisible(text == 'custom' and self.select_bundle_cbb.isVisible()))
+        self.custom_versions_te.setPlaceholderText('Custom versions')
+        self.custom_versions_te.hide()
 
         self.settings_ly.addLayout(self.formLayout)
 
@@ -172,13 +176,6 @@ class AgioDeskInstallerDialog(QMainWindow):
 
         self.book_widget.addWidget(self.page_4)
 
-        # page 5
-        # self.page_5 = QWidget()
-        # self.update_ly = QVBoxLayout(self.page_4)
-        # self.update_ly.setContentsMargins(30, 20, 30, 20)
-        # self.page_5.setLayout(self.update_ly)
-        # self.book_widget.addWidget(self.page_5)
-
         # other
         self.central_ly.addWidget(self.book_widget)
 
@@ -188,7 +185,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.resize(800, 500)
         self.init_ui()
 
-        self.custom_versions = {}
+        # self.custom_versions = {}
         self.proc: QProcess|None = None
 
         # debug shortcuts
@@ -196,9 +193,6 @@ class AgioDeskInstallerDialog(QMainWindow):
         QShortcut(QKeySequence("Alt+2"), self, activated=self.set_page_settings)
         QShortcut(QKeySequence("Alt+3"), self, activated=self.set_page_logs)
         QShortcut(QKeySequence("Alt+4"), self, activated=self.set_page_done)
-        # QShortcut(QKeySequence("Alt+5"), self, activated=self.set_page_update)
-        QShortcut(QKeySequence("Ctrl+v"), self, activated=self.read_custom_versions)
-        QShortcut(QKeySequence("Ctrl+r"), self, activated=self.reset_custom_versions)
         QShortcut(QKeySequence("Ctrl+l"), self, activated=self.open_logs_dir, context=Qt.ApplicationShortcut)
         QShortcut(QKeySequence("Ctrl+d"), self, activated=self.switch_debug_mode, context=Qt.ApplicationShortcut)
 
@@ -208,11 +202,15 @@ class AgioDeskInstallerDialog(QMainWindow):
     # ui
     def init_ui(self):
         self.apply_style(self)
-        prefs = app_dirs.get_global_config()
-        install_path = prefs.get('install_path', app_dirs.install_dir())
-        self.installation_path_le.setText(str(install_path))
-        self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
-        self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
+        try:
+            prefs = app_dirs.get_global_config()
+        except Exception as e:
+            logger.exception(f"Failed to get preferences. {e}")
+        else:
+            install_path = prefs.get('install_path', app_dirs.install_dir())
+            self.installation_path_le.setText(str(install_path))
+            self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
+            self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
         logger.info('Installer started....')
 
     @classmethod
@@ -252,7 +250,6 @@ class AgioDeskInstallerDialog(QMainWindow):
             install_path=self.installation_path_le.text(),
             desktop_shortcut=self.add_desktop_shortcut_cbx.isChecked(),
             main_menu_shortcut=self.add_menu_shortcut_cbx.isChecked(),
-            versions_code=self.custom_versions.get('code')
         )
         self.set_page_logs()
 
@@ -316,7 +313,7 @@ class AgioDeskInstallerDialog(QMainWindow):
     #     self.book_widget.setCurrentIndex(4)
 
     def switch_debug_mode(self):
-        if self.book_widget.currentIndex() == 0:
+        if self.book_widget.currentIndex() == 1:
             self.debug_mode = not self.debug_mode
             self.update_bundle_selector()
 
@@ -325,50 +322,36 @@ class AgioDeskInstallerDialog(QMainWindow):
             try:
                 self.select_bundle_cbb.reload()
                 self.select_bundle_cbb.show()
+                self.bundle_lb.show()
             except Exception as e:
                 self.output_logs.append(str(e))
                 QMessageBox.critical(self, "Error", str(e))
         else:
             self.select_bundle_cbb.hide()
+            self.bundle_lb.hide()
+            self.custom_versions_te.hide()
 
-
-    # utils
-    def read_custom_versions(self):
-        if self.book_widget.currentIndex() != 0:
-            return
-        clipboard = QApplication.clipboard()
-        code = clipboard.text()
-        try:
-            values = customization.parse_custom_code(code)
-        except Exception as e:
-            traceback.print_exc()
-            QMessageBox.critical(self, "Error", f"Could not parse clipboard: {e}")
-            self.reset_custom_versions()
-            return
-        if values:
-            self.custom_versions = {'code': code, 'values': values}
-            self.update_custom_versions_label()
-
-    def update_custom_versions_label(self):
-        if self.custom_versions:
-            text = ''
-            for k, v in self.custom_versions['values'].items():
-                text += f'{k}@{v["value"]}<br>'
-            html = (f"""
-<html>
-<body>
-<p><b>Custom versions:</b></p>{text}<br>
-<i style="font-style:italic; color:#707070;">(Ctrl+R to reset)</i>
-</body>
-</html>
-""")
-            self.custom_versions_lb.setText(html)
-        else:
-            self.custom_versions_lb.setText('')
-
-    def reset_custom_versions(self):
-        self.custom_versions = {}
-        self.update_custom_versions_label()
+    def get_installation_version(self) -> dict:
+        """
+        [
+        {'agio_core': {'ref_type': 'branch', 'value': 'dev', 'raw': 'agio_core:branch=dev'}}
+        ...
+        ]
+        """
+        bundle = self.select_bundle_cbb.currentText()
+        if bundle:
+            if bundle == 'default':
+                return {}
+            elif bundle == 'custom':
+                code = self.custom_versions_te.toPlainText()
+                values = customization.parse_custom_code(code)
+                return values
+            else:
+                bundle_data = self.select_bundle_cbb.data.get('installer_bundles', {}).get(bundle)
+                if not bundle_data:
+                    raise Exception('Bundle "{}" not found'.format(bundle))
+                values = customization.parse_custom_code('\n'.join(bundle_data))
+                return values
 
     def open_logs_dir(self):
         log_dir = app_dirs.logs_dir()
@@ -387,19 +370,17 @@ class AgioDeskInstallerDialog(QMainWindow):
             cmd.append('--add-desktop-shortcut')
         if kwargs.get('main_menu_shortcut'):
             cmd.append('--add-main-menu-shortcut')
-        if self.debug_mode and (versions := self.select_bundle_cbb.get_bundle_data()):
-            for item in versions:
-                cmd.extend(['--package-version', item])
-        elif self.custom_versions:
-            for k, v in self.custom_versions['values'].items():
+        custom_versions: dict = self.get_installation_version()
+        if custom_versions:
+            for k, v in custom_versions.items():
                 cmd.extend(['--package-version', v['raw']])
         # start process
+        msg = f'CMD: {" ".join(map(str, cmd))}'
+        logger.info(msg)
         self.proc = QProcess()
         self.proc.setProcessChannelMode(QProcess.MergedChannels)
         self.proc.readyRead.connect(self.on_process_output)
         self.proc.finished.connect(self.on_process_finished)
-        msg = f'CMD: {" ".join(map(str, cmd))}'
-        logger.info(msg)
         self.output_logs.append(msg)
         self.proc.start(cmd[0], cmd[1:])
         if self.proc.error() == QProcess.ProcessError.FailedToStart:
@@ -417,27 +398,34 @@ class CheckBoxLabel(QLabel):
         return super().mouseReleaseEvent(event)
 
 
-class BundleSelectorWidget(QWidget):
+class BundleSelectorWidget(QComboBox):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.ly = QHBoxLayout(self)
-        self.ly.addWidget(QLabel('Select Bundle:'))
-        self.cbb = QComboBox()
-        self.ly.addWidget(self.cbb)
+        self.setMaximumWidth(200)
         self.data = None
 
     def reload(self):
         bundle_list_url = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
         text_data = requests.get(bundle_list_url).text
         self.data = json.loads(text_data)
+        # Example:
+        # {'installer_bundles':
+        #   {'staging':
+        #       ['agio_core:branch=dev', 'agio_pipe:tag=0.0.8'],
+        #    'bundle-test':
+        #       ['agio_core:tag=0.0.9', 'agio_pipe:branch=dev']
+        #    }
+        # }
         names = list(self.data.get('installer_bundles', []))
-        self.cbb.clear()
-        self.cbb.addItem('default')
-        self.cbb.addItems(names)
+        self.clear()
+        self.addItem('default')
+        self.addItems(names)
+        self.addItem('custom')
+
 
     def get_bundle_data(self):
         if self.data:
-            current_name = self.cbb.currentText()
+            current_name = self.currentText()
             if current_name == 'default':
                 return
             bundle = self.data['installer_bundles'].get(current_name)

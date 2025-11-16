@@ -47,19 +47,16 @@ QTextBrowser {
 QCheckBox::indicator {
     width: 16px;
     height: 16px;
-    /* Углы индикатора будут скруглены, если установить здесь */
-    /* border-radius: 3px; */
 }
 
 QCheckBox::indicator:unchecked {
-    border: 1px solid #555;     /* Неактивная рамка */
-    background-color: #222; /* Неактивный фон: темно-серый */
+    border: 1px solid #555;
+    background-color: #222;
 }
 
 QCheckBox::indicator:checked {
-    /* Меняем рамку и фон на активные цвета */
-    border: 1px solid #FFF;     /* Активная рамка: белая */
-    background-color: #6a6a6a; /* <-- Активный фон: ярко-зеленый (Замените на нужный вам цвет) */
+    border: 1px solid #FFF;
+    background-color: #6a6a6a;
 }
 
 QCheckBox {
@@ -72,4 +69,12 @@ QCheckBox {
     background-color: #444444;
     border-width: 1px;
     border-style: solid;
+}
+QTextEdit {
+    background-color: #373737;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 5px;
+
 }

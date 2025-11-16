@@ -1,9 +1,10 @@
 import logging
+import platform
 import shutil
 from pathlib import Path
 
 from agio.tools import app_dirs
-from . import install_desk, user_tools
+from . import install_desk, user_tools, file_tools
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,20 @@ def start_install(**kwargs):
     except Exception as e:
         logger.exception('Installation failed.')
         raise
+    # create scripts
+    scripts_dir = file_tools.get_assets('scripts', platform.system().lower())
+    context = {
+        'config_dir': app_dirs.config_dir().as_posix(),
+        'agio_executable': result['executable']
+    }
+    install_desk.copy_scripts(scripts_dir, app_dirs.binary_files_dir(), context)
     logger.info("Executable file %s", result['executable'])
     kw = dict(
         shortcut_name='agio.desk',
-        executable_file=result['executable'],
+        # executable_file=result['executable'],
+        executable_file=str(app_dirs.binary_files_dir('agio-desk-console.cmd')),
         workdir=result['install_path'],
-        args=['desk']
+        # args=['desk']
     )
     logger.info('Create Shortcuts...')
     if kwargs.get('add_desktop_shortcut'):

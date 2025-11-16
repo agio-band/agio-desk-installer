@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -16,15 +17,24 @@ DEFAULT_VENV_PACKAGES = (
     'agio_core',
     'agio_desk',
     'agio_broker',
-    'agio_drive',
+    # 'agio_drive',
 )
 
 BIN_EXT = '.exe' if os.name == 'nt' else ''
+SCRIPT_EXT = '.bat' if os.name == 'nt' else '.sh'
 
 # variables
 def get_uv_executable() -> str:
-    uv_exec = file_tools.get_assets('uv'+BIN_EXT)
-    return str(uv_exec)
+    try:
+        uv_exec = Path(file_tools.get_assets('uv'+BIN_EXT))
+        return str(uv_exec)
+    except FileNotFoundError:
+        global_uv = shutil.which('uv').strip()
+        if global_uv:
+            return global_uv
+        else:
+            raise FileNotFoundError('uv executable not found')
+
 
 
 def get_agio_bin_path(project_root: str|Path)-> str:
@@ -85,6 +95,7 @@ def make_global_command_executable(exec_file: str, file_name: str = None) -> str
 
 
 def get_package_list(versions: dict = None):
+    versions = versions or {}
     if versions:
         print('Selected versions:', flush=True)
         for k, v in versions.items():
@@ -107,6 +118,19 @@ def execute_workspace_on_install_callbacks(path):
     manager = AWorkspaceManager(root=path)
     for pkg in manager.iter_installed_packages():
         pkg.execute_package_callback('on_installed', manager)
+
+
+def copy_scripts(src_dir, target_dir, context=None):
+    logger.info('Copying scripts: %s > %s', src_dir, target_dir)
+    context = context or {}
+    target_dir = Path(target_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    for file_name in Path(src_dir).iterdir():
+        target_file = target_dir.joinpath(file_name.name)
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+        target_file.write_text(file_name.read_text(encoding='utf-8').format(**context), encoding='utf-8')
+        logger.info(f'Created file: {target_file}')
+
 
 # main
 def install(install_path: str = None, package_versions: list[str] = None, **kwargs) -> dict:

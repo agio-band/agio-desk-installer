@@ -1,7 +1,14 @@
+import os
 import re
 import requests
 from urllib.parse import urlparse
 from packaging.version import Version
+
+
+def get_headers():
+    token = os.getenv("GITHUB_TOKEN")
+    if token:
+        return {"Authorization": f"Bearer {token}"}
 
 
 def parse_repo_info(repository_url: str):
@@ -18,8 +25,12 @@ def parse_repo_info(repository_url: str):
 def get_release_list(owner: str, repo: str):
     """List of releases"""
     url = f"https://api.github.com/repos/{owner}/{repo}/releases"
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
+    print('HEADERS', get_headers(), flush=True)
+    response = requests.get(url, timeout=10, headers=get_headers())
+    if response.status_code == 403:
+        raise RuntimeError('Define GITHUB_TOKEN variable with your Github token or wait 1h.')
+    else:
+        response.raise_for_status()
     return response.json()
 
 

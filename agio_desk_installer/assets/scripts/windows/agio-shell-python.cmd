@@ -1,0 +1,7 @@
+@ECHO OFF
+SETLOCAL
+CHCP 65001 > NUL 2>&1
+SET "SETUP_FILE_PATH=%~dp0agio-setup.cmd"
+CALL %SETUP_FILE_PATH%
+cd ..\venvs\default
+uv run python
