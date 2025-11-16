@@ -144,6 +144,9 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.logs_ly = QVBoxLayout(self.page_3)
         self.logs_ly.setContentsMargins(30, 20, 30, 20)
         self.output_logs = QTextBrowser()
+        monospace_font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        monospace_font.setPointSize(10)
+        self.output_logs.setFont(monospace_font)
         self.logs_ly.addWidget(self.output_logs)
 
         self.logs_but = QHBoxLayout()

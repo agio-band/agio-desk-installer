@@ -53,7 +53,15 @@ def _exec_uv_command(command: list[str], workdir: str = None):
     logger.debug(f'CMD: {" ".join(cmd)}')
     envs = os.environ.copy()
     envs.pop('VIRTUAL_ENV', None)
-    result: subprocess.CompletedProcess = subprocess.run(cmd, cwd=workdir.as_posix(), env=envs, capture_output=True, text=True, check=False)
+    result: subprocess.CompletedProcess = subprocess.run(
+        cmd,
+        cwd=workdir.as_posix(),
+        env=envs,
+        capture_output=True,
+        text=True,
+        check=False,
+        encoding='utf-8',
+    )
     if result.returncode != 0:
         error_message = result.stderr.strip()
         raise Exception(f'Error executing command: {error_message}')
@@ -116,9 +124,13 @@ def get_package_list(versions: dict = None):
 
 def execute_workspace_on_install_callbacks(path):
     from agio.core.workspaces import AWorkspaceManager
-
+    logger.info(f'Executing workspace installation callbacks...')
     manager = AWorkspaceManager(root=path)
-    for pkg in manager.iter_installed_packages():
+    packages = list(manager.iter_installed_packages())
+    if not packages:
+        raise Exception('No installed packages found.')
+    for pkg in packages:
+        logger.info(f'Installing callback for package {pkg.package_name}')
         pkg.execute_package_callback('on_installed', manager)
 
 
