@@ -397,6 +397,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         # start process
         msg = f'CMD: {" ".join(map(str, cmd))}'
         logger.info(msg)
+        self.output_logs.clear()
         self.proc = QProcess()
         self.proc.setProcessChannelMode(QProcess.MergedChannels)
         self.proc.readyRead.connect(self.on_process_output)

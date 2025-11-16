@@ -44,7 +44,7 @@ def get_agio_bin_path(project_root: str|Path)-> str:
         return Path(project_root, '.venv', 'bin', 'agio').as_posix()
 
 # utils
-def _exec_uv_command(command: list[str], workdir: str = None) -> None:
+def _exec_uv_command(command: list[str], workdir: str = None):
     cmd = [
         get_uv_executable(),
         *command,
@@ -53,8 +53,10 @@ def _exec_uv_command(command: list[str], workdir: str = None) -> None:
     logger.debug(f'CMD: {" ".join(cmd)}')
     envs = os.environ.copy()
     envs.pop('VIRTUAL_ENV', None)
-    subprocess.run(cmd, cwd=workdir.as_posix(), env=envs)
-
+    result: subprocess.CompletedProcess = subprocess.run(cmd, cwd=workdir.as_posix(), env=envs, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        error_message = result.stderr.strip()
+        raise Exception(f'Error executing command: {error_message}')
 
 # install
 def create_default_venv(env_path: str|Path = None) -> Path:
