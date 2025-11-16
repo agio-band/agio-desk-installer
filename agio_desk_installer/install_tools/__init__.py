@@ -36,7 +36,7 @@ def start_install(**kwargs):
     kw = dict(
         shortcut_name='agio.desk',
         # executable_file=result['executable'],
-        executable_file=str(app_dirs.binary_files_dir('agio-desk-console.cmd')),
+        executable_file=str(app_dirs.binary_files_dir('agio-desk.cmd')),
         workdir=result['install_path'],
         # args=['desk']
     )
