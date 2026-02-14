@@ -146,6 +146,13 @@ def copy_scripts(src_dir, target_dir, context=None):
         logger.info(f'Created file: {target_file}')
 
 
+def copy_uv(target_dir):
+    uv_executable = Path(get_uv_executable())
+    if not uv_executable.is_absolute():
+        uv_executable = uv_executable.resolve()
+    shutil.copy2(uv_executable, target_dir)
+
+
 # main
 def install(install_path: str = None, package_versions: list[str] = None, **kwargs) -> dict:
     # get package list
