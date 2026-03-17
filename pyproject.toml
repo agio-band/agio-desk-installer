@@ -13,4 +13,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-agio-core = { git = "http://192.168.0.206:3000/agio-band/agio-core" }
+agio-core = { git = "https://github.com/agio-band/agio-core.git" }

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 from agio_desk_installer.install_tools import repository, file_tools
 from agio_desk_installer.install_tools.customization import parse_line
 
@@ -49,7 +49,7 @@ def _exec_uv_command(command: list[str], workdir: str = None):
         get_uv_executable(),
         *command,
     ]
-    workdir = Path(workdir or app_dirs.default_env_install_dir())
+    workdir = Path(workdir or local_dirs.default_env_install_dir())
     logger.debug(f'CMD: {" ".join(cmd)}')
     envs = os.environ.copy()
     envs.pop('VIRTUAL_ENV', None)
@@ -69,7 +69,7 @@ def _exec_uv_command(command: list[str], workdir: str = None):
 # install
 def create_default_venv(env_path: str|Path = None) -> Path:
     # get dir
-    env_path = Path(env_path or app_dirs.default_env_install_dir())
+    env_path = Path(env_path or local_dirs.default_env_install_dir())
     logger.debug("Creating default venv")
     env_path.mkdir(parents=True, exist_ok=True)
     # init project
@@ -92,7 +92,7 @@ def install_packages(*pkgs, workdir, refresh_packages=True):
 
 def make_global_command_executable(exec_file: str, file_name: str = None) -> str:
     """Create global "agio" command"""
-    bin_path_dir = app_dirs.user_binary_path_dir()
+    bin_path_dir = local_dirs.user_binary_path_dir()
     bin_path_dir.mkdir(parents=True, exist_ok=True)
     binary_file_name = file_name or Path(exec_file).name
     binary_file_path = Path(bin_path_dir, binary_file_name)
@@ -163,7 +163,7 @@ def install(install_path: str = None, package_versions: list[str] = None, **kwar
     for pkg_name in pacakge_list:
         logger.info(pkg_name)
     # create new venv
-    default_venv_dir = app_dirs.default_env_install_dir(install_path)
+    default_venv_dir = local_dirs.default_env_install_dir(install_path)
     workdir = create_default_venv(default_venv_dir)
     install_packages(*pacakge_list, workdir=workdir)
     # execute packages on installation callbacks

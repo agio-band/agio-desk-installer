@@ -3,7 +3,7 @@ import platform
 import shutil
 from pathlib import Path
 
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 from . import install_desk, user_tools, file_tools
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ def start_install(**kwargs):
       'package_versions': ('agio-core:branch=dev', 'agio-desk:commit=d947745')
     }
     """
-    app_dirs.save_global_config(kwargs)
+    local_dirs.save_global_config(kwargs)
     logger.info('Start installation...')
     try:
         result = install_desk.install(**kwargs)
@@ -28,18 +28,18 @@ def start_install(**kwargs):
     # create scripts
     scripts_dir = file_tools.get_assets('scripts', platform.system().lower())
     context = {
-        'config_dir': app_dirs.config_dir().as_posix(),
+        'config_dir': local_dirs.config_dir().as_posix(),
         'agio_executable': result['executable']
     }
-    install_desk.copy_scripts(scripts_dir, app_dirs.binary_files_dir(), context)
+    install_desk.copy_scripts(scripts_dir, local_dirs.binary_files_dir(), context)
     logger.info("Executable file %s", result['executable'])
     # copy UV
-    install_desk.copy_uv(app_dirs.binary_files_dir())
+    install_desk.copy_uv(local_dirs.binary_files_dir())
     # create shortcuts
     kw = dict(
         shortcut_name='agio.desk',
         # executable_file=result['executable'],
-        executable_file=str(app_dirs.binary_files_dir('agio-desk.cmd')),
+        executable_file=str(local_dirs.binary_files_dir('agio-desk.cmd')),
         workdir=result['install_path'],
         # args=['desk']
     )
@@ -52,13 +52,13 @@ def start_install(**kwargs):
 
 
 def uninstall(delete_user_prefs=False):
-    info = app_dirs.get_global_config()
+    info = local_dirs.get_global_config()
     install_path = info.get('path_to_install')
     if install_path:
         install_path = Path(install_path)
         if install_path.is_dir():
             shutil.rmtree(install_path)
     if delete_user_prefs:
-        app_dirs.delete_global_config_file()
+        local_dirs.delete_global_config_file()
 
 

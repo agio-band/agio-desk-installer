@@ -5,7 +5,7 @@ from logging import *
 from logging.config import dictConfig
 import os
 import sys
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 
 
 def debug_flag_is_set():
@@ -18,7 +18,7 @@ DEBUG_MODE = bool(os.getenv("DEBUG") or os.getenv('AGIO_DEBUG')) or debug_flag_i
 if DEBUG_MODE:
     print(" Debug mode is on ".center(40, '='), flush=True)
 
-LOG_DIR = Path(app_dirs.logs_dir())
+LOG_DIR = Path(local_dirs.logs_dir())
 # default level
 DEFAULT_LEVEL = DEBUG if DEBUG_MODE else (os.getenv("AGIO_LOG_LEVEL") or INFO)
 DEFAULT_LEVEL_NAME = getLevelName(DEFAULT_LEVEL)

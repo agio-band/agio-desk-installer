@@ -14,7 +14,7 @@ import requests
 
 from agio.tools.paths import open_path
 from agio_desk_installer.install_tools import setup_logs, start_install, customization, file_tools
-from agio.tools import app_dirs, process_utils
+from agio.tools import local_dirs, process_utils
 from agio_desk_installer.labels import WELCOME_TEXT, DONE_TEXT
 
 logger = logging.getLogger(__name__)
@@ -212,11 +212,11 @@ class AgioDeskInstallerDialog(QMainWindow):
     def init_ui(self):
         self.apply_style(self)
         try:
-            prefs = app_dirs.get_global_config()
+            prefs = local_dirs.get_global_config()
         except Exception as e:
             logger.exception(f"Failed to get preferences. {e}")
         else:
-            install_path = prefs.get('install_path', app_dirs.install_dir())
+            install_path = prefs.get('install_path', local_dirs.install_dir())
             self.installation_path_le.setText(str(install_path))
             self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
             self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
@@ -377,7 +377,7 @@ class AgioDeskInstallerDialog(QMainWindow):
                 return values
 
     def open_logs_dir(self):
-        log_dir = app_dirs.logs_dir()
+        log_dir = local_dirs.logs_dir()
         if log_dir.exists():
             open_path(log_dir)
         else:

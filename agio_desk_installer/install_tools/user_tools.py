@@ -4,7 +4,7 @@ import platform
 import shutil
 from pathlib import Path
 
-from agio.tools import app_dirs
+from agio.tools import local_dirs
 from agio_desk_installer.install_tools import file_tools
 
 logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ def get_icon_path(ext):
     if not full_path.exists():
         logger.error(f"Cannot find icon: {full_path}")
         return
-    icon_in_config = app_dirs.config_dir('icons', full_path.name)
+    icon_in_config = local_dirs.config_dir('icons', full_path.name)
     if icon_in_config.exists():
         return icon_in_config.as_posix()
     icon_in_config.parent.mkdir(parents=True, exist_ok=True)
