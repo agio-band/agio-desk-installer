@@ -46,7 +46,7 @@ if defined GLOBAL_UV_PATH (
 )
 :uvok
 
-
+echo  "CLEAR VENV"
 uv venv --clear
 uv sync
 uv pip install pywin32 nuitka
