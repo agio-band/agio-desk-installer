@@ -86,7 +86,10 @@ def install_packages(*pkgs, workdir, refresh_packages=True):
         print(p, flush=True)
     cmd = ['pip', 'install']
     if refresh_packages:
-        cmd.append('--reinstall')
+        cmd.extend(['--reinstall', '--refresh', '--no-cache'])
+    print('Install Packages Command:')
+    print('uv', ' '.join(cmd + list(pkgs)))
+    print('Working Directory:', workdir)
     _exec_uv_command([*cmd, *pkgs], workdir=workdir)
 
 
@@ -154,7 +157,7 @@ def copy_uv(target_dir):
 
 
 # main
-def install(install_path: str = None, package_versions: list[str] = None, **kwargs) -> dict:
+def install(install_path: str = None, package_versions: list[str] = None, dev_mode=False, **kwargs) -> dict:
     # get package list
     logger.info('Collecting packages...')
     pacakge_list = list(get_package_list(package_versions))
@@ -165,7 +168,7 @@ def install(install_path: str = None, package_versions: list[str] = None, **kwar
     # create new venv
     default_venv_dir = local_dirs.default_env_install_dir(install_path)
     workdir = create_default_venv(default_venv_dir)
-    install_packages(*pacakge_list, workdir=workdir)
+    install_packages(*pacakge_list, workdir=workdir, refresh_packages=dev_mode)
     # execute packages on installation callbacks
     execute_workspace_on_install_callbacks(workdir)
     # create global command bin
