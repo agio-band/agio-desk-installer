@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-import traceback
+import textwrap
 from pathlib import Path
 import logging
 from PySide6.QtCore import *
@@ -220,6 +220,7 @@ class AgioDeskInstallerDialog(QMainWindow):
             self.installation_path_le.setText(str(install_path))
             self.add_desktop_shortcut_cbx.setChecked(prefs.get('add_desktop_shortcut', True))
             self.add_menu_shortcut_cbx.setChecked(prefs.get('add_main_menu_shortcut', True))
+        self.set_default_bundle_list()
         logger.info('Installer started....')
 
     def on_bundle_changed(self, bundle_name):
@@ -272,6 +273,7 @@ class AgioDeskInstallerDialog(QMainWindow):
             install_path=self.installation_path_le.text(),
             desktop_shortcut=self.add_desktop_shortcut_cbx.isChecked(),
             main_menu_shortcut=self.add_menu_shortcut_cbx.isChecked(),
+            dev_mode=self.debug_mode
         )
         self.set_page_logs()
 
@@ -339,6 +341,14 @@ class AgioDeskInstallerDialog(QMainWindow):
             self.debug_mode = not self.debug_mode
             self.update_bundle_selector()
 
+    def set_default_bundle_list(self):
+        if not self.custom_versions_te.toPlainText():
+            self.custom_versions_te.setPlainText(textwrap.dedent('''\
+            agio_core:branch=dev
+            agio_desk:branch=dev
+            agio_broker:branch=dev
+            '''))
+
     def update_bundle_selector(self):
         if self.debug_mode:
             try:
@@ -397,6 +407,8 @@ class AgioDeskInstallerDialog(QMainWindow):
         if custom_versions:
             for k, v in custom_versions.items():
                 cmd.extend(['--package-version', v['raw']])
+        if custom_versions or kwargs.get('dev_mode'):
+            cmd.append('--dev-mode')
         # start process
         msg = f'CMD: {" ".join(map(str, cmd))}'
         logger.info(msg)
@@ -505,7 +517,7 @@ if __name__ == '__main__':
     @click.command()
     @click.option("-i", "--install-path", type=str, required=False, default=None,
                   help="Path for installation")
-    @click.option("-d", "--add-desktop-shortcut", is_flag=True, required=False, default=False,
+    @click.option("-s", "--add-desktop-shortcut", is_flag=True, required=False, default=False,
                   help="Add a shortcut to desktop")
     @click.option("-m", "--add-main-menu-shortcut", is_flag=True, required=False, default=False,
                   help="Add a shortcut to Main Manu")
@@ -513,8 +525,11 @@ if __name__ == '__main__':
                   help="Custom version in BASE64 encoded string")
     @click.option("-p", "--package-version", required=False, multiple=True,
                   help="Package version in format <package-name>:<ref-type>=<ref-value>")
+    @click.option("-d", "--dev-mode", required=False, is_flag=True, default=False,
+                  help="Dev Mode")
+
     def install(install_path: str, add_desktop_shortcut: bool, add_main_menu_shortcut: bool,
-                custom_version_code: str, package_version: list[str]|None) -> None:
+                custom_version_code: str, package_version: list[str]|None, dev_mode=False) -> None:
         if not install_path:
             check_started_as_admin()
             open_installer_dialog()
@@ -533,6 +548,7 @@ if __name__ == '__main__':
                 package_versions=versions,
                 add_desktop_shortcut=add_desktop_shortcut,
                 add_main_menu_shortcut=add_main_menu_shortcut,
+                dev_mode=dev_mode,
             )
 
     install()
