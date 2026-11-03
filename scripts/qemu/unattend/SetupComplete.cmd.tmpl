@@ -1,0 +1,6 @@
+@echo off
+:: Runs automatically at the end of Windows Setup (as SYSTEM).
+:: Invokes the real provisioning script placed next to this file.
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0SetupComplete.ps1" ^
+    >> "%WINDIR%\Temp\agio-setupcomplete.log" 2>&1

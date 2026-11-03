@@ -1,0 +1,77 @@
+# Runs automatically at the end of Windows Setup, as SYSTEM (full rights,
+# no UAC). Rendered by install-windows.sh: {{SSH_PUBLIC_KEY}} and {{VM_USER}}
+# are substituted. Log: C:\Windows\Temp\agio-setupcomplete.log.
+#
+# Installs: uv + git (machine PATH), host SSH key, OpenSSH server.
+# Does NOT shut the VM down - first-logon scripts (e.g. schneegans tweaks,
+# virtio guest tools) run after this; the host script controls shutdown.
+
+$ErrorActionPreference = 'Continue'
+$log = "$env:windir\Temp\agio-setupcomplete.log"
+function Log($m) { Add-Content -Encoding utf8 $log "$(Get-Date -Format s) $m" }
+
+Log "=== agio builder provisioning start ==="
+
+# --- 1. uv via the official astral installer ---
+# SetupComplete runs as SYSTEM before user profiles exist, so USERPROFILE is
+# redirected: binaries land under C:\Users\<user>\.local\bin (plain dirs).
+# The installer's HKCU Path update would target SYSTEM's hive - instead the
+# literal path is added to the MACHINE Path below, making uv global.
+if (-not (Test-Path 'C:\Users\{{VM_USER}}\.local\bin\uv.exe')) {
+    try {
+        $env:USERPROFILE = 'C:\Users\{{VM_USER}}'
+        powershell -NoProfile -ExecutionPolicy Bypass -Command 'irm https://astral.sh/uv/install.ps1 | iex' | Out-Null
+        Log "uv installed: $((Get-Item 'C:\Users\{{VM_USER}}\.local\bin\uv.exe').VersionInfo.ProductVersion)"
+    } catch { Log "uv FAILED: $_" }
+} else { Log "uv already present" }
+
+# --- 2. git: latest Git-for-Windows release, silent per-machine install ---
+if (-not (Test-Path 'C:\Program Files\Git\cmd\git.exe')) {
+    try {
+        $rel = Invoke-RestMethod 'https://api.github.com/repos/git-for-windows/git/releases/latest'
+        $url = ($rel.assets | Where-Object { $_.name -match '^Git-.*-64-bit\.exe$' } | Select-Object -First 1).browser_download_url
+        Log "git from: $url"
+        curl.exe -sSfL -o "$env:TEMP\git-setup.exe" $url
+        Start-Process -Wait "$env:TEMP\git-setup.exe" -ArgumentList '/VERYSILENT','/NORESTART','/NOCANCEL','/SP-','/SUPPRESSMSGBOXES'
+        Log "git installed"
+    } catch { Log "git FAILED: $_" }
+} else { Log "git already present" }
+
+# --- 3. machine PATH += uv location (proper registry API, no setx truncation) ---
+$uvBin = 'C:\Users\{{VM_USER}}\.local\bin'
+$mp = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+if ($mp -notlike "*$uvBin*") {
+    [Environment]::SetEnvironmentVariable('Path', "$mp;$uvBin", 'Machine')
+    Log 'machine PATH updated'
+}
+
+# --- 4. host SSH key -> authorized_keys (user file + admin variant sshd reads) ---
+$pub = '{{SSH_PUBLIC_KEY}}'
+foreach ($f in @('C:\Users\{{VM_USER}}\.ssh\authorized_keys',
+                 'C:\ProgramData\ssh\administrators_authorized_keys')) {
+    New-Item -ItemType Directory -Force (Split-Path $f) | Out-Null
+    Add-Content -Encoding ascii $f $pub
+}
+icacls 'C:\ProgramData\ssh\administrators_authorized_keys' /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F' | Out-Null
+Log 'ssh key installed'
+
+# --- 5. OpenSSH server (last: service starts with the fresh machine PATH) ---
+try {
+    $cap = Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH.Server*'
+    if ($cap.State -ne 'Installed') {
+        Add-WindowsCapability -Online -Name $cap.Name | Out-Null
+    }
+    Set-Service sshd -StartupType Automatic
+    Start-Service sshd
+    New-NetFirewallRule -Name 'OpenSSH-Server-In' -DisplayName 'OpenSSH Server (sshd)' `
+        -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 | Out-Null
+    Log 'sshd enabled and started'
+} catch { Log "sshd FAILED: $_" }
+
+# --- 6. headless-friendly power settings + build dir ---
+powercfg /change standby-timeout-ac 0
+powercfg /change monitor-timeout-ac 0
+powercfg -h off
+New-Item -ItemType Directory -Force "C:\Users\{{VM_USER}}\agio-src" | Out-Null
+
+Log '=== provisioning done (VM stays up; first-logon scripts follow) ==='

@@ -31,9 +31,49 @@ agio-desk-setup -p agio_core:branch=dev -p agio_pipe:tag=0.0.1 -p agio_desk:comm
 
 # Build
 
--  прописать путь к пакету `agio_core` в `PYTHONPATH`
--  установить `venv` командой `uv sync`
-- сделать симлинк исполняемого файла `uv` (или `uv,exe`) в директорию `assets/`
-- запустить сборку `./build.sh` или `./build.cmd`
+Сборка через [just](https://github.com/casey/just). Результаты кладутся в `dist/`.
 
-Результат будет сохранён в диреткории `./dest`
+## Linux
+
+```shell
+just build-linux        # или: bash scripts/build-linux.sh
+```
+
+Нужен `uv` в PATH. Скрипт сам создаёт симлинк `agio_desk_installer/assets/uv`.
+Результат: `dist/agio_desk_installer`.
+
+## Windows
+
+Бинарник собирается в виртуальной машине QEMU/KVM с настоящей Windows
+(Nuitka + PySide6 в Wine не работают). Нужен ISO Windows x64 в
+`.vm/windows-builder/windows.iso` (активация не нужна; см. `.vm/windows-builder/README.txt`).
+
+Разовая подготовка — установка и настройка Windows-VM (~20 минут, без участия человека):
+
+```shell
+just setup-build        # или: bash scripts/qemu/install-windows.sh
+```
+
+Идемпотентно: если VM уже готова, сразу выйдет. Использует пользовательский файл
+ответов `.vm/windows-builder/autounattend.xml`, если он есть (см. scripts/qemu/README.md).
+
+Ежедневная сборка (VM поднимется сама):
+
+```shell
+just build-windows      # или: bash scripts/qemu/build-windows-qemu.sh
+bash scripts/qemu/build-windows-qemu.sh --shutdown   # собрать и погасить VM
+```
+
+Результат: `dist/agio_desk_installer.exe`.
+
+## С нуля на новой машине
+
+```shell
+sudo apt install qemu-system-x86 qemu-utils ovmf swtpm swtpm-tools genisoimage socat just
+# скачать ISO Windows 10/11 x64 и положить в .vm/windows-builder/windows.iso
+just setup-build        # установка Windows в VM
+just build-linux        # Linux-бинарник
+just build-windows      # Windows-бинарник
+```
+
+Подробности, параметры VM и ручной fallback: [scripts/qemu/README.md](scripts/qemu/README.md).

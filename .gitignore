@@ -4,3 +4,8 @@ __pycache__/
 *$py.class
 .venv/
 dest/
+dist/
+.vm/
+.ruff_cache/
+agio_desk_installer/assets/uv
+agio_desk_installer/assets/uv.exe
