@@ -11,10 +11,12 @@ build-windows-install:
 
 build-windows:
     @bash scripts/qemu/build-windows-qemu.sh
+    @bash scripts/qemu/build-windows-qemu.sh --shutdown
 
 
 build-windows-gui:
     @bash scripts/qemu/build-windows-qemu.sh --boot
+    @bash scripts/qemu/build-windows-qemu.sh --shutdown
 
 
 build-linux:

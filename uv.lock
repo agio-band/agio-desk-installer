@@ -5,7 +5,7 @@ requires-python = "==3.11.*"
 [[package]]
 name = "agio-core"
 version = "0.0.27"
-source = { git = "https://github.com/agio-band/agio-core.git#d6b18722ea9f18050e0286cbd8dc87ab76511a72" }
+source = { git = "https://github.com/agio-band/agio-core.git?rev=installer#8a8e8682c03c3758d780a4a8bcb01f0133ff76e1" }
 dependencies = [
     { name = "click" },
     { name = "diskcache" },
@@ -33,7 +33,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agio-core", git = "https://github.com/agio-band/agio-core.git" },
+    { name = "agio-core", git = "https://github.com/agio-band/agio-core.git?rev=installer" },
     { name = "click", specifier = ">=8.3.0" },
     { name = "nuitka", specifier = ">=2.8.4" },
     { name = "pip", specifier = ">=25.2" },

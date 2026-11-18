@@ -40,11 +40,22 @@ echo uv.exe: "%UV_EXE%"
 if not exist "agio_desk_installer\assets" mkdir "agio_desk_installer\assets"
 copy /y "%UV_EXE%" "agio_desk_installer\assets\uv.exe" >nul
 
-:: --- venv & dependencies ---
-echo === uv venv --clear / uv sync ===
-uv venv --clear
+:: --- clean previous build state ---
+:: .venv is not synced from the host, so it would otherwise persist between
+:: builds; remove it so dependencies are installed from scratch.
+echo === Removing .venv and cached agio-core ===
+if exist ".venv" rmdir /s /q ".venv"
+echo "========= CLEAN UV CACHE =========="
+uv cache clean agio-core --force
 if errorlevel 1 exit /b 1
-uv sync
+
+:: --- venv & dependencies ---
+:: -P agio-core re-resolves the moving "installer" tag and refreshes its cache
+:: (uv.lock pins a commit, so a plain `uv sync` would keep reusing the old one).
+echo === uv venv / uv sync ===
+uv venv
+if errorlevel 1 exit /b 1
+uv sync -P agio-core
 if errorlevel 1 exit /b 1
 uv pip install pywin32
 if errorlevel 1 exit /b 1

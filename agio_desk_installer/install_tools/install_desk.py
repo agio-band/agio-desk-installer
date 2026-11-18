@@ -6,20 +6,21 @@ from pathlib import Path
 
 from agio.tools import local_dirs
 from agio_desk_installer.install_tools import repository, file_tools
-from agio_desk_installer.install_tools.customization import parse_line
+# from agio_desk_installer.install_tools.customization import parse_line
 
 logger = logging.getLogger(__name__)
 
 
 DEFAULT_VENV_PYTHON_VERSION = '>=3.11.0, <3.12'
-BUNDLES_URL = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
+# BUNDLES_URL = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
 DEFAULT_VENV_PACKAGES = (
     'agio_core',
     'agio_desk',
     'agio_broker',
-    # 'agio_drive',
 )
-
+BINARY_LIST = [
+    'agio-login',
+]
 BIN_EXT = '.exe' if os.name == 'nt' else ''
 SCRIPT_EXT = '.bat' if os.name == 'nt' else '.sh'
 
@@ -34,7 +35,6 @@ def get_uv_executable() -> str:
             return global_uv
         else:
             raise FileNotFoundError('uv executable not found')
-
 
 
 def get_agio_bin_path(project_root: str|Path)-> str:
@@ -149,12 +149,20 @@ def copy_scripts(src_dir, target_dir, context=None):
         logger.info(f'Created file: {target_file}')
 
 
-def copy_uv(target_dir):
+def copy_bin(target_dir):
+    # uv
     uv_executable = Path(get_uv_executable())
     if not uv_executable.is_absolute():
         uv_executable = uv_executable.resolve()
+    logger.info(f'Copying bin: {uv_executable} -> {target_dir}')
     shutil.copy2(uv_executable, target_dir)
-
+    # other
+    for bin_name in BINARY_LIST:
+        asset_bin_path = Path(file_tools.get_assets(bin_name + BIN_EXT))
+        if not asset_bin_path.exists():
+            raise FileNotFoundError(f'Binary {bin_name} not found.')
+        logger.info(f'Copying {bin_name} -> {target_dir}')
+        shutil.copy2(asset_bin_path, target_dir)
 
 # main
 def install(install_path: str = None, package_versions: list[str] = None, dev_mode=False, **kwargs) -> dict:

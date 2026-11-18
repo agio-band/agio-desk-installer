@@ -34,7 +34,7 @@ def start_install(**kwargs):
     install_desk.copy_scripts(scripts_dir, local_dirs.binary_files_dir(), context)
     logger.info("Executable file %s", result['executable'])
     # copy UV
-    install_desk.copy_uv(local_dirs.binary_files_dir())
+    install_desk.copy_bin(local_dirs.binary_files_dir())
     # create shortcuts
     kw = dict(
         shortcut_name='agio.desk',

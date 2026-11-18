@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import textwrap
+import traceback
 from pathlib import Path
 import logging
 from PySide6.QtCore import *
@@ -19,6 +20,7 @@ from agio_desk_installer.labels import WELCOME_TEXT, DONE_TEXT
 
 logger = logging.getLogger(__name__)
 IS_WINDOWS = os.name == 'nt'
+ACTUAL_BUNDLE_URL = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
 
 
 class AgioDeskInstallerDialog(QMainWindow):
@@ -356,6 +358,7 @@ class AgioDeskInstallerDialog(QMainWindow):
                 self.select_bundle_cbb.show()
                 self.bundle_lb.show()
             except Exception as e:
+                traceback.print_exc()
                 self.output_logs.append(str(e))
                 QMessageBox.critical(self, "Error", str(e))
         else:
@@ -441,15 +444,24 @@ class BundleSelectorWidget(QComboBox):
         self.data = None
 
     def reload(self):
-        bundle_list_url = 'https://storage.yandexcloud.net/agio-public/pipe-config/installer-bundles.json'
-        text_data = requests.get(bundle_list_url).text
-        self.data = json.loads(text_data)
+        text_data = requests.get(ACTUAL_BUNDLE_URL).text
+        try:
+            self.data = json.loads(text_data)
+        except json.decoder.JSONDecodeError:
+            logger.error('Actual versions not available')
+            self.data = {'installer_bundles':
+                  {'staging':
+                      ['agio_core:branch=dev',
+                       'agio_desk:branch=dev',
+                       'agio_broker:branch=dev'],
+                   }
+                }
         # Example:
         # {'installer_bundles':
         #   {'staging':
-        #       ['agio_core:branch=dev', 'agio_pipe:tag=0.0.8'],
+        #       ['agio_core:branch=dev', 'agio_desk:tag=0.0.8'],
         #    'bundle-test':
-        #       ['agio_core:tag=0.0.9', 'agio_pipe:branch=dev']
+        #       ['agio_core:tag=0.0.9', 'agio_desk:branch=dev']
         #    }
         # }
         names = list(self.data.get('installer_bundles', []))

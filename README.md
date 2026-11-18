@@ -1,7 +1,9 @@
 ## agio.desk installer
 
-WIP
+# Сборка
 
+!!! Важно, инсталлятор использует модуль agio-core. Во время борки устанавливается комит с тегом `installer`.
+Поэтому надо следить, где именно этот тег установлен в репозитории.
 
 # Custom versions
 
@@ -44,11 +46,11 @@ just build-linux        # или: bash scripts/build-linux.sh
 
 ## Windows
 
-Бинарник собирается в виртуальной машине QEMU/KVM с настоящей Windows
-(Nuitka + PySide6 в Wine не работают). Нужен ISO Windows x64 в
+Бинарник собирается в виртуальной машине QEMU/KVM с настоящей Windows. Нужен ISO Windows x64 в
 `.vm/windows-builder/windows.iso` (активация не нужна; см. `.vm/windows-builder/README.txt`).
+Либо указать переменную окружения `AGIO_WIN_ISO`
 
-Разовая подготовка — установка и настройка Windows-VM (~20 минут, без участия человека):
+Разовая подготовка — автоматическая установка и настройка Windows-VM (~20 минут):
 
 ```shell
 just setup-build        # или: bash scripts/qemu/install-windows.sh
