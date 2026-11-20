@@ -4,8 +4,8 @@ requires-python = "==3.11.*"
 
 [[package]]
 name = "agio-core"
-version = "0.0.27"
-source = { git = "https://github.com/agio-band/agio-core.git?rev=installer#8a8e8682c03c3758d780a4a8bcb01f0133ff76e1" }
+version = "0.0.28"
+source = { git = "https://github.com/agio-band/agio-core.git?rev=installer#dfaddb406d14e9c05e533c06d436f5e01f326ada" }
 dependencies = [
     { name = "click" },
     { name = "diskcache" },

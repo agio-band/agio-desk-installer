@@ -323,6 +323,7 @@ class AgioDeskInstallerDialog(QMainWindow):
         self.book_widget.setCurrentIndex(0)
 
     def set_page_settings(self):
+        # проверить что установлены зависимости для сборки пакетов apt install -y build-essential
         self.label_welcome.setText('Select options and press Install')
         self.book_widget.setCurrentIndex(1)
 
@@ -444,18 +445,18 @@ class BundleSelectorWidget(QComboBox):
         self.data = None
 
     def reload(self):
-        text_data = requests.get(ACTUAL_BUNDLE_URL).text
-        try:
-            self.data = json.loads(text_data)
-        except json.decoder.JSONDecodeError:
-            logger.error('Actual versions not available')
-            self.data = {'installer_bundles':
-                  {'staging':
-                      ['agio_core:branch=dev',
-                       'agio_desk:branch=dev',
-                       'agio_broker:branch=dev'],
-                   }
-                }
+        # text_data = requests.get(ACTUAL_BUNDLE_URL).text
+        # try:
+        #     self.data = json.loads(text_data)
+        # except json.decoder.JSONDecodeError:
+        #     logger.error('Actual versions not available')
+        self.data = {'installer_bundles':
+              {'staging':
+                  ['agio_core:branch=dev',
+                   'agio_desk:branch=dev',
+                   'agio_broker:branch=dev'],
+               }
+            }
         # Example:
         # {'installer_bundles':
         #   {'staging':

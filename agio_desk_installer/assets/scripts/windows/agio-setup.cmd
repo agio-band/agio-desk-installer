@@ -4,6 +4,10 @@ echo SETUP AGIO ENV
 
 CHCP 65001 > NUL 2>&1
 
+SET CONFIG_DIR="{{config_dir}}"
+
+REM TODO use config dir
+
 SET "DEFAULT_CUSTOM_CONFIG_PATH=%~dp0agio-custom-env.cmd"
 SET "USER_CUSTOM_CONFIG_PATH=%APPDATA%\agio\agio-custom-env.cmd"
 
@@ -16,4 +20,4 @@ IF EXIST "%USER_CUSTOM_CONFIG_PATH%" (
 )
 
 
-set AGIO_CLI={agio_executable}
+set AGIO_CLI={{agio_executable}}

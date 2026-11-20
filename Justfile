@@ -10,6 +10,8 @@ build-windows-install:
 
 
 build-windows:
+    -rm ./agio_desk_installer/assets/agio-login*
+    cp ../bin/agio-login.exe ./agio_desk_installer/assets/
     @bash scripts/qemu/build-windows-qemu.sh
     @bash scripts/qemu/build-windows-qemu.sh --shutdown
 
@@ -20,6 +22,8 @@ build-windows-gui:
 
 
 build-linux:
+    -rm ./agio_desk_installer/assets/agio-login*
+    cp ../bin/agio-login ./agio_desk_installer/assets/
     @bash scripts/build-linux.sh
 
 

@@ -8,6 +8,8 @@ from . import install_desk, user_tools, file_tools
 
 logger = logging.getLogger(__name__)
 
+SCRIPT_EXT = 'cmd' if platform.system() == 'Windows' else 'sh'
+
 
 def start_install(**kwargs):
     """Example:
@@ -38,8 +40,7 @@ def start_install(**kwargs):
     # create shortcuts
     kw = dict(
         shortcut_name='agio.desk',
-        # executable_file=result['executable'],
-        executable_file=str(local_dirs.binary_files_dir('agio-desk.cmd')),
+        executable_file=str(local_dirs.binary_files_dir('agio-desk.'+SCRIPT_EXT)),
         workdir=result['install_path'],
         # args=['desk']
     )

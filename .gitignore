@@ -9,3 +9,4 @@ dist/
 .ruff_cache/
 agio_desk_installer/assets/uv
 agio_desk_installer/assets/uv.exe
+agio_desk_installer/assets/agio-login*

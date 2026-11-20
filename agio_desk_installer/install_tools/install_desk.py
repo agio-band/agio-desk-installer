@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -44,6 +45,25 @@ def get_agio_bin_path(project_root: str|Path)-> str:
         return Path(project_root, '.venv', 'bin', 'agio').as_posix()
 
 # utils
+TEMPLATE_VAR_RE = re.compile(r'\{\{\s*(\w+)\s*\}\}')
+
+
+def format_template(text: str, context: dict) -> str:
+    """Replace only {{name}} placeholders from context.
+
+    Unlike str.format, ${name} and {name} sequences (shell variables,
+    batch syntax) are left untouched. Unknown {{name}} variables are
+    kept as is.
+    """
+    def _replace(match: re.Match) -> str:
+        key = match.group(1)
+        if key in context:
+            return str(context[key])
+        logger.warning('Unknown template variable: %s', key)
+        return match.group(0)
+    return TEMPLATE_VAR_RE.sub(_replace, text)
+
+
 def _exec_uv_command(command: list[str], workdir: str = None):
     cmd = [
         get_uv_executable(),
@@ -140,13 +160,17 @@ def execute_workspace_on_install_callbacks(path):
 def copy_scripts(src_dir, target_dir, context=None):
     logger.info('Copying scripts: %s > %s', src_dir, target_dir)
     context = context or {}
+    logger.info(f'Context: {context}')
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
     for file_name in Path(src_dir).iterdir():
+        logger.info('Copying script: %s', file_name)
         target_file = target_dir.joinpath(file_name.name)
         target_file.parent.mkdir(parents=True, exist_ok=True)
-        target_file.write_text(file_name.read_text(encoding='utf-8').format(**context), encoding='utf-8')
+        target_file.write_text(format_template(file_name.read_text(encoding='utf-8'), context), encoding='utf-8')
         logger.info(f'Created file: {target_file}')
+        if os.name != 'nt':
+            Path(target_file).chmod(0o777)
 
 
 def copy_bin(target_dir):
@@ -155,14 +179,18 @@ def copy_bin(target_dir):
     if not uv_executable.is_absolute():
         uv_executable = uv_executable.resolve()
     logger.info(f'Copying bin: {uv_executable} -> {target_dir}')
-    shutil.copy2(uv_executable, target_dir)
+    target_file = shutil.copy2(uv_executable, target_dir)
+    if os.name != 'nt':
+        Path(target_file).chmod(0o777)
     # other
     for bin_name in BINARY_LIST:
         asset_bin_path = Path(file_tools.get_assets(bin_name + BIN_EXT))
         if not asset_bin_path.exists():
             raise FileNotFoundError(f'Binary {bin_name} not found.')
         logger.info(f'Copying {bin_name} -> {target_dir}')
-        shutil.copy2(asset_bin_path, target_dir)
+        target_file = shutil.copy2(asset_bin_path, target_dir)
+        if os.name != 'nt':
+            Path(target_file).chmod(0o777)
 
 # main
 def install(install_path: str = None, package_versions: list[str] = None, dev_mode=False, **kwargs) -> dict:
