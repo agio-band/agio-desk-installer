@@ -6,11 +6,13 @@ readme = "README.md"
 requires-python = ">=3.11, <3.12"
 dependencies = [
     "agio-core",
+    "agio-dev-tools",
     "click>=8.3.0",
-    "nuitka>=2.8.4",
+    "nuitka>=4.0.8",
     "pip>=25.2",
     "pyside6>=6.10.0",
 ]
 
 [tool.uv.sources]
 agio-core = { git = "https://github.com/agio-band/agio-core.git", rev = "installer" }
+agio-dev-tools = { git = "https://github.com/agio-band/agio-dev-tools.git" }
