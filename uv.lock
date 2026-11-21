@@ -4,8 +4,8 @@ requires-python = "==3.11.*"
 
 [[package]]
 name = "agio-core"
-version = "0.0.28"
-source = { git = "https://github.com/agio-band/agio-core.git?rev=installer#dfaddb406d14e9c05e533c06d436f5e01f326ada" }
+version = "0.0.29"
+source = { git = "https://github.com/agio-band/agio-core.git?rev=installer#72433e8090700b5a94cd3cddbd7eea46f2586975" }
 dependencies = [
     { name = "click" },
     { name = "diskcache" },
@@ -45,7 +45,7 @@ requires-dist = [
 [[package]]
 name = "agio-dev-tools"
 version = "0.0.1"
-source = { git = "https://github.com/agio-band/agio-dev-tools.git#e837eaccdfcac0da20047f745863591ab8a320f5" }
+source = { git = "https://github.com/agio-band/agio-dev-tools.git#998d1281b3db18a070840d0787dabd68dd840c15" }
 dependencies = [
     { name = "jedi" },
     { name = "pyside6" },

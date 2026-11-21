@@ -11,7 +11,7 @@ from PySide6.QtGui import *
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtWidgets import *
-import requests
+from agio_desk_installer.install_tools.os_depended import get_callback
 
 from agio.tools.paths import open_path
 from agio_desk_installer.install_tools import setup_logs, start_install, customization, file_tools
@@ -206,9 +206,11 @@ class AgioDeskInstallerDialog(QMainWindow):
         QShortcut(QKeySequence("Alt+4"), self, activated=self.set_page_done)
         QShortcut(QKeySequence("Ctrl+l"), self, activated=self.open_logs_dir, context=Qt.ApplicationShortcut)
         QShortcut(QKeySequence("Ctrl+d"), self, activated=self.switch_debug_mode, context=Qt.ApplicationShortcut)
+        QShortcut(QKeySequence("Ctrl+e"), self, activated=self.open_script_editor, context=Qt.ApplicationShortcut)
 
         self.forced_exit = False
         self.debug_mode = False
+        self._editor = None
 
     # ui
     def init_ui(self):
@@ -270,14 +272,20 @@ class AgioDeskInstallerDialog(QMainWindow):
         if QMessageBox.question(self, "Cancel installation", "Exit ?") == QMessageBox.Yes:
             super().close()
 
-    def on_click_install(self):
-        self.start_installation_process(
+    def _collect_install_options(self):
+        return dict(
             install_path=self.installation_path_le.text(),
             desktop_shortcut=self.add_desktop_shortcut_cbx.isChecked(),
             main_menu_shortcut=self.add_menu_shortcut_cbx.isChecked(),
             dev_mode=self.debug_mode
         )
-        self.set_page_logs()
+
+    def on_click_install(self):
+        callback = get_callback('before_install')
+        data = self._collect_install_options()
+        if callback(self, **data):
+            self.start_installation_process(**self._collect_install_options())
+            self.set_page_logs()
 
     def on_click_browse(self):
         f = QFileDialog.getExistingDirectory(self, "Browse")
@@ -396,6 +404,24 @@ class AgioDeskInstallerDialog(QMainWindow):
             open_path(log_dir)
         else:
             QMessageBox.critical(self, "Error", "Logs directory does not exist")
+
+    def open_script_editor(self):
+        from agio_dev_tools.lib.script_editor import editor_dialog
+        if self._editor is None:
+            self._editor = editor_dialog.ScriptEditorDialog(
+                parent=self,
+                session_name='agio-installer',
+                custom_namespace=dict(
+                    dialog=self
+                ),
+                init_text='''\
+agio Installer dialog
+---------------------
+Variables:
+    dialog: current installer dialog
+'''
+            )
+        self._editor.show()
 
 
     # processing

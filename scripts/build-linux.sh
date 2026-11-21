@@ -22,6 +22,8 @@ if [ ! -e "$ROOT/agio_desk_installer/assets/uv" ]; then
   echo "linked assets/uv -> $UV_BIN"
 fi
 uv sync -P agio-core
+uv sync -P agio-dev-tools
+
 uv run --active python -m nuitka \
   --onefile \
   --standalone \
